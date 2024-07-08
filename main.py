@@ -144,7 +144,6 @@ def get_transform(mode):
     else:
         print("Wrong transfromation mode selected. it should train/test")
 
-
 def push_to_huggingface(config, out_dir):
     
     login(token=os.environ["HF_TOKEN"], write_permission=True)  
@@ -182,16 +181,15 @@ def push_to_huggingface(config, out_dir):
         repo_type="model",
         )
 
-    print(f"All output folder is push to huggingface repo for experiment : {config.experiment_name}")
+    print(f"All output folder files are pushed to huggingface repo for experiment : {config.experiment_name}")
 
-def inference(config, trainer, eval_dataset, eval_df, out_dir):
+def save_results(config, eval_df, results):
 
-    logits, _, _       = trainer.predict(eval_dataset)
-    predictions        = logits.argmax(-1) + 1
-    eval_df["pred"]   = predictions
+    eval_df['preds_thre'] = test_results
 
-    for i in range(6):
-        eval_df[f'pred_{i}'] = logits[:,i]
+    stacked               = torch.stack(tensor_list)
+    eval_df["preds"]      = torch.clamp(stacked, min=0.0, max=1.0)
+
 
     file_path          = out_dir + '/' +f"fold_{config.fold}_oof.csv"
     eval_df.to_csv(file_path, index=False)
@@ -283,19 +281,13 @@ def main(config):
     trainer.fit(model, data_module)
 
     # Evaluate on validation set
-    if not config.full_fit:
-        val_results = trainer.test(model, test_dataloaders=DataLoader(
-            ISICDataset(config.hdf5_file_path, eval_df, get_transform("test")),
-            batch_size  = config.batch_size,
-            num_workers = config.num_workers
-        ))
-    
-
     if config.full_fit:
         print("No inference for full fit")
-    else:
-        inference(config, trainer, eval_dataset, eval_df, out_dir)
 
+    else:
+        test_results = trainer.test(ckpt_path="best", datamodule=data_module)
+    
+    save_results(config, eval_df, val_results)
     push_to_huggingface(config, out_dir)
     
     end_time = datetime.now()

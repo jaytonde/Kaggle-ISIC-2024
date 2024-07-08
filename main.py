@@ -127,6 +127,24 @@ class ISICDataModule(L.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
 
+def get_transform(mode):
+    if mode == "train":
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),  # Convert PIL Image to tensor
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize the tensor
+        ])
+        return transform
+
+    elif mode == "test":
+        transform = transforms.Compose([
+            transforms.ToTensor(),  # Convert PIL Image to tensor
+        ])
+        return transform
+    else:
+        print("Wrong transfromation mode selected. it should train/test")
+
+
 def push_to_huggingface(config, out_dir):
     
     login(token=os.environ["HF_TOKEN"], write_permission=True)  
@@ -219,50 +237,59 @@ def main(config):
     if config.debug:
         train_df          = dataset_df[0:1000]
         eval_df           = dataset_df[1001:2050]
-        train_dataset     = prepare_dataset(config, train_df)
-        eval_dataset      = prepare_dataset(config, eval_df)
     else:    
         if config.full_fit:
             train_df          = dataset_df
-            train_dataset     = prepare_dataset(config, train_df)
-            eval_dataset      = None
+            eval_df           = None
         else:
             train_df          = dataset_df[dataset_df["fold"] != config.fold]
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
-            train_dataset     = prepare_dataset(config, train_df)
-            eval_dataset      = prepare_dataset(config, eval_df)
 
-    tokenizer, model  = get_model(config)
+    # Initialize DataModule
+    data_module = ISICDataModule(
+        hdf5_file_path  = config.image_path,
+        train_df        = train_df,
+        val_df          = eval_df,
+        train_transform = get_transform("train"),
+        test_transform  = get_transform("test"),
+        batch_size      = config.batch_size,
+        num_workers     = config.num_workers
+    )
+    
+    data_module.setup()
 
-    train_dataset     = train_dataset.map(tokenize_function, batched=True, fn_kwargs={'tokenizer':tokenizer,'truncation':config.truncation,'max_length':config.max_length})
+    # Initialize model
+    model = ISICModel(config)
 
+    # Define callbacks
+    checkpoint_callback = ModelCheckpoint(
+        dirpath    = f'checkpoints/fold_{config.fold}',
+        filename   = 'best-checkpoint',
+        save_top_k = 1,
+        verbose    = True,
+        monitor    = 'val_loss',
+        mode       = 'min'
+    )
+
+    # Initialize trainer
+    trainer = Trainer(
+        max_epochs  = config.max_epochs,
+        callbacks   = [checkpoint_callback],
+        accelerator = "gpu",
+        precision   = "16-mixed",
+    )
+
+    # Train the model
+    trainer.fit(model, data_module)
+
+    # Evaluate on validation set
     if not config.full_fit:
-        eval_dataset      = eval_dataset.map(tokenize_function, batched=True, fn_kwargs={'tokenizer':tokenizer,'truncation':config.truncation,'max_length':config.max_length})
-
-    data_collator     = DataCollatorWithPadding(tokenizer=tokenizer)
-
-    args              = TrainingArguments(output_dir=out_dir, **config.training_args)
-
-    if config.full_fit:
-        trainer           = Trainer (
-                                        model           = model,
-                                        args            = args,
-                                        train_dataset   = train_dataset,
-                                        data_collator   = data_collator,
-                                        compute_metrics = compute_metrics,
-                                    )
-    else:
-        trainer           = Trainer (
-                                        model           = model,
-                                        args            = args,
-                                        train_dataset   = train_dataset,
-                                        eval_dataset    = eval_dataset,
-                                        data_collator   = data_collator,
-                                        compute_metrics = compute_metrics,
-                                    )
-    trainer.train()
-    trainer.save_model(out_dir)
-    tokenizer.save_pretrained(out_dir)
+        val_results = trainer.test(model, test_dataloaders=DataLoader(
+            ISICDataset(config.hdf5_file_path, eval_df, get_transform("test")),
+            batch_size  = config.batch_size,
+            num_workers = config.num_workers
+        ))
+    
 
     if config.full_fit:
         print("No inference for full fit")

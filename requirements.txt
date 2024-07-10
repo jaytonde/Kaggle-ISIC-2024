@@ -1,1 +1,15 @@
 lightning==2.3.2
+numpy
+omegaconf
+transformers
+python-dotenv
+wandb
+kaggle
+torch
+evaluate
+sentencepiece
+protobuf==3.20.0
+accelerate
+huggingface-hub
+scikit-learn
+discord.py

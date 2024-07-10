@@ -1,5 +1,6 @@
 import os
 import sys
+import timm
 import wandb
 import warnings
 import numpy as np

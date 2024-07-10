@@ -204,7 +204,7 @@ def main(config):
 
     if config.debug:
         print(f"Debugging mode is on.....")
-    elif config.full_fit:
+    if config.full_fit:
         print(f"Running experiment in full_fit mode.....")
         out_dir = os.path.join(config.output_dir,f"full_fit")
     else:

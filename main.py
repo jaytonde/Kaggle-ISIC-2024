@@ -4,6 +4,7 @@ import timm
 import wandb
 import warnings
 import numpy as np
+from torch import nn
 import pandas as pd
 import lightning as L
 from PIL import Image
@@ -52,12 +53,12 @@ class ISICModel(L.LightningModule):
         self.training_step_outputs = []
         self.validation_step_outputs = []
         
-        self.model    = timm.create_model(config.MODEL_NAME, pretrained=pretrained)
-        if "convnext" in config.MODEL_NAME:
+        self.model    = timm.create_model(config.model_id, pretrained=pretrained)
+        if "convnext" in config.model_id:
             self.model.head.fc    = nn.Linear(self.model.head.fc.in_features, 1)
-        elif "efficientnet" in config.MODEL_NAME:
+        elif "efficientnet" in config.model_id:
             self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
-        elif "resnet" in config.MODEL_NAME:
+        elif "resnet" in config.model_id:
             self.model.fc         = nn.Linear(self.model.fc.in_features, 1)
             
         self.save_hyperparameters() # to save all init parameter's as hyperparameter's
@@ -116,8 +117,8 @@ class ISICDataModule(L.LightningDataModule):
         self.num_workers      = num_workers
 
     def setup(self, stage=None):
-        self.train_dataset = ISICDataset("/kaggle/input/isic-2024-challenge/train-image/image", self.train_df, self.train_transform)
-        self.val_dataset   = ISICDataset("/kaggle/input/isic-2024-challenge/train-image/image", self.val_df, self.test_transform)
+        self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
+        self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)

@@ -20,7 +20,7 @@ from sklearn.model_selection import KFold
 import torchvision.transforms as transforms
 from sklearn.model_selection import StratifiedKFold
 from lightning.pytorch.callbacks import ModelCheckpoint
-from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding
+from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding, set_seed
 
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 

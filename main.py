@@ -43,7 +43,7 @@ class ISICDataset:
     def __getitem__(self, idx):
         image_id      = self.df.iloc[idx]['isic_id']
         image_data    = self.image_file[image_id][()]
-        pil_image     = Image.fromarray(np.uint8(image_data))
+        pil_image     = Image.open(io.BytesIO(image_data))
         tensor_image  = self.transform(pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
         

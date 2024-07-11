@@ -248,6 +248,7 @@ def main(config):
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
 
     # Initialize DataModule
+    print(f"Image path : {config.image_path}")
     data_module = ISICDataModule(
         hdf5_file_path  = config.image_path,
         train_df        = train_df,

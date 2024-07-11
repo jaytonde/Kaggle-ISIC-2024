@@ -1,6 +1,7 @@
 import os
 import sys
 import timm
+import h5py
 import torch
 import wandb
 import warnings
@@ -31,18 +32,18 @@ warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 load_dotenv()
 
 class ISICDataset:
-    def __init__(self, image_root_dir, df, transform=None):
-        self.image_root_dir = image_root_dir
+    def __init__(self, image_file, df, transform=None):
         self.df             = df
         self.transform      = transform
+        self.image_file     = h5py.File(image_file, 'r')
         
     def __len__(self):
         return len(self.df)
     
     def __getitem__(self, idx):
         image_id      = self.df.iloc[idx]['isic_id']
-        image_path    = os.path.join(self.image_root_dir, f"{image_id}.jpg")
-        pil_image     = Image.open(image_path)
+        image_data    = self.image_file[image_id][()]
+        pil_image     = Image.fromarray(np.uint8(image_data))
         tensor_image  = self.transform(pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
         

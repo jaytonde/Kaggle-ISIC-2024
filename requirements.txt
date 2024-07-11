@@ -13,3 +13,4 @@ accelerate
 huggingface-hub
 scikit-learn
 discord.py
+h5py

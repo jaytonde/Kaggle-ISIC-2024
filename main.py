@@ -118,8 +118,8 @@ class ISICDataModule(L.LightningDataModule):
         self.num_workers      = num_workers
 
     def setup(self, stage=None):
-        if self.train_transform is not None:
-            print(f"Got transform yeah.. : {self.train_transform}")
+        if self.test_transform is not None:
+            print(f"Got transform yeah.. : {self.test_transform}")
         self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
         self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
 

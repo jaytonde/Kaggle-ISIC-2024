@@ -249,13 +249,22 @@ def main(config):
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
 
     # Initialize DataModule
+    train_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),  # Convert PIL Image to tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize the tensor
+    ])
+    test_transform = transforms.Compose([
+            transforms.ToTensor(),  # Convert PIL Image to tensor
+        ])
+
     print(f"Image path : {config.image_path}")
     data_module = ISICDataModule(
         hdf5_file_path  = config.image_path,
         train_df        = train_df,
         val_df          = eval_df,
-        train_transform = get_transform("train"),
-        test_transform  = get_transform("test"),
+        train_transform = train_transform,
+        test_transform  = test_transform,
         batch_size      = config.batch_size,
         num_workers     = config.num_workers
     )

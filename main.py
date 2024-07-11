@@ -53,18 +53,16 @@ class ISICDataset:
 class ISICModel(L.LightningModule):
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
         super(ISICModel, self).__init__()
-        self.training_step_outputs = []
+        self.training_step_outputs   = []
         self.validation_step_outputs = []
         
-        self.model    = timm.create_model(config.model_id, pretrained=pretrained)
+        self.model                = timm.create_model(config.model_id, pretrained=pretrained)
         if "convnext" in config.model_id:
             self.model.head.fc    = nn.Linear(self.model.head.fc.in_features, 1)
         elif "efficientnet" in config.model_id:
             self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
         elif "resnet" in config.model_id:
             self.model.fc         = nn.Linear(self.model.fc.in_features, 1)
-            
-        self.save_hyperparameters() # to save all init parameter's as hyperparameter's
    
     def forward(self, x):
         x = self.model(x)
@@ -120,6 +118,8 @@ class ISICDataModule(L.LightningDataModule):
         self.num_workers      = num_workers
 
     def setup(self, stage=None):
+        if self.train_transform is not None:
+            print(f"Got transform yeah.. : {self.train_transform}")
         self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
         self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
 

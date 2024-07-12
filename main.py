@@ -99,6 +99,7 @@ class ISICModel(L.LightningModule):
         
     def on_validation_epoch_end(self):
         all_preds = torch.stack(self.validation_step_outputs)
+        self.validation_step_outputs.clear()
         self.log("It is the end of last validation epoch", len(all_preds))
         
     def predict_step(self, batch):
@@ -118,6 +119,10 @@ class ISICDataModule(L.LightningDataModule):
         self.num_workers      = num_workers
 
     def setup(self, stage=None):
+        if stage:
+            tran, val_dataloader
+        else stage==test:
+            test
         if self.test_transform is not None:
             print(f"Got transform yeah.. : {self.test_transform}")
         self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
@@ -269,7 +274,7 @@ def main(config):
         num_workers     = config.num_workers
     )
     
-    data_module.setup()
+    data_module.setup(stage="fit")
 
     # Initialize model
     model = ISICModel(config)

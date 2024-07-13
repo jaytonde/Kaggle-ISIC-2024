@@ -118,7 +118,7 @@ class ISICModel(L.LightningModule):
         self.validation_step_ground_truths.clear()
         self.log("ROC AUC metric", metric)
         
-    def predict_step(self, batch):
+    def predict_step(self, batch, batch_idx):
         x     = batch['image']
         y     = batch['label']
         y_hat = self(x)
@@ -126,7 +126,7 @@ class ISICModel(L.LightningModule):
         return y_hat
 
     def on_predict_epoch_end(self):
-        all_preds  = torch.cat(self.predict_step_outputs).cpu().numpy()
+        all_preds = torch.stack(self.predict_step_outputs)
         return all_preds
         
 class ISICDataModule(L.LightningDataModule):

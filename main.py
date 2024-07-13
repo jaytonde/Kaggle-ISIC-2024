@@ -100,8 +100,8 @@ class ISICModel(L.LightningModule):
         self.log("It is the end of last epoch", len(all_preds))
         
     def on_validation_epoch_end(self):
-        all_preds  = torch.stack(self.validation_step_outputs)
-        all_labels = torch.stack(self.validation_step_outputs)
+        all_preds  = torch.cat(self.validation_step_outputs).cpu().numpy()
+        all_labels = torch.cat(self.validation_step_outputs).cpu().numpy()
         metric     = roc_auc_score(all_labels,all_preds)
         self.validation_step_outputs.clear()
         self.validation_step_ground_truths.clear()

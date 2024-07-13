@@ -56,6 +56,7 @@ class ISICModel(L.LightningModule):
         super(ISICModel, self).__init__()
         self.validation_step_outputs       = []
         self.validation_step_ground_truths = []
+        self.predict_step_outputs          = []
         
         self.model                = timm.create_model(config.model_id, pretrained=pretrained)
         if "convnext" in config.model_id:
@@ -118,9 +119,15 @@ class ISICModel(L.LightningModule):
         self.log("ROC AUC metric", metric)
         
     def predict_step(self, batch):
-        x = batch['image']
-        y = batch['label']
-        return self(x)
+        x     = batch['image']
+        y     = batch['label']
+        y_hat = self(x)
+        self.predict_step_outputs.append(y_hat)
+        return y_hat
+
+    def on_predict_epoch_end(self):
+        all_preds  = torch.cat(self.predict_step_outputs).cpu().numpy()
+        return all_preds
         
 class ISICDataModule(L.LightningDataModule):
     def __init__(self, hdf5_file_path, train_df, val_df, train_transform=None, test_transform=None, batch_size=32, num_workers=4):

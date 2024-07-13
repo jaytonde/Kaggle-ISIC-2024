@@ -221,6 +221,10 @@ def save_results(config, eval_df, results, out_dir):
     stacked               = torch.stack(results)
     eval_df["preds"]      = torch.clamp(stacked, min=0.0, max=1.0)
 
+    print(eval_df.shape)
+    print(eval_df.columns)
+    print(eval_df.head())
+
     file_path             = out_dir + '/' +f"fold_{config.fold}_oof.csv"
     eval_df.to_csv(file_path, index=False)
     print(f"OOF is saved at : {file_path} having shape : {eval_df.shape}")

@@ -323,7 +323,7 @@ def main(config):
         print("No inference for full fit")
 
     else:
-        test_results = trainer.test(ckpt_path="best", datamodule=data_module)
+        test_results = trainer.predict(ckpt_path="best", datamodule=data_module)
     
     save_results(config, eval_df, val_results)
     push_to_huggingface(config, out_dir)

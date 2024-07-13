@@ -101,13 +101,11 @@ class ISICModel(L.LightningModule):
         
     def on_validation_epoch_end(self):
         all_preds  = torch.cat(self.validation_step_outputs).cpu().numpy()
-        all_labels = torch.cat(self.validation_step_outputs).cpu().numpy()
-        threshold = 0.5  # You may need to adjust this threshold
+        all_labels = torch.cat(self.validation_step_ground_truths).cpu().numpy()
+
+        threshold         = 0.5 
         all_labels_binary = (all_labels > threshold).astype(int)
-        
-        # If your predictions are probabilities, we can use them directly
-        # If not, we need to apply a sigmoid function
-        all_preds_proba = 1 / (1 + np.exp(-all_preds))
+        all_preds_proba   = 1 / (1 + np.exp(-all_preds))
         
         metric = roc_auc_score(all_labels, all_preds_proba)
         self.validation_step_outputs.clear()

@@ -267,7 +267,7 @@ def main(config):
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
 
     print(f"Shape of the train df : {train_df.shape}")
-    print(f"Shape of the test df : {test_df.shape}")
+    print(f"Shape of the test df : {eval_df.shape}")
 
     # Initialize DataModule
     train_transform = transforms.Compose([

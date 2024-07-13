@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import KFold
 import torchvision.transforms as transforms
+from torchmetrics.classification import BinaryAUROC
 from sklearn.model_selection import StratifiedKFold
 from lightning.pytorch.callbacks import ModelCheckpoint
 from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding, set_seed

@@ -300,7 +300,7 @@ def main(config):
 
     # Define callbacks
     checkpoint_callback = ModelCheckpoint(
-        dirpath    = f'checkpoints/fold_{config.fold}',
+        dirpath    = out_dir,
         filename   = 'best-checkpoint',
         save_top_k = 1,
         verbose    = True,

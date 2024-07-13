@@ -84,7 +84,7 @@ class ISICModel(L.LightningModule):
         loss  = self.loss_fn(y_hat, y)
         self.validation_step_outputs.append(y_hat)
         self.validation_step_ground_truths.append(y)
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def configure_optimizers(self):

@@ -127,6 +127,7 @@ class ISICModel(L.LightningModule):
 
     def on_predict_epoch_end(self):
         all_preds = torch.stack(self.predict_step_outputs)
+        all_preds = 1 / (1 + np.exp(-all_preds))
         return all_preds
         
 class ISICDataModule(L.LightningDataModule):
@@ -213,18 +214,14 @@ def push_to_huggingface(config, out_dir):
     print(f"All output folder files are pushed to huggingface repo for experiment : {config.experiment_name}")
 
 def save_results(config, eval_df, results, out_dir):
+    print(f"Length of results : {len(results)}")
 
-    print(f"Type of results : {type(results[0])}")
-    print(results)
     eval_df['preds_thre'] = results
-
     stacked               = torch.stack(results)
     eval_df["preds"]      = torch.clamp(stacked, min=0.0, max=1.0)
 
-
-    file_path          = out_dir + '/' +f"fold_{config.fold}_oof.csv"
+    file_path             = out_dir + '/' +f"fold_{config.fold}_oof.csv"
     eval_df.to_csv(file_path, index=False)
-
     print(f"OOF is saved at : {file_path} having shape : {eval_df.shape}")
 
 def main(config):

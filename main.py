@@ -207,6 +207,7 @@ def push_to_huggingface(config, out_dir):
 
 def save_results(config, eval_df, results, out_dir):
 
+    print(f"Shape of results : {results.shape}")
     eval_df['preds_thre'] = results
 
     stacked               = torch.stack(results)

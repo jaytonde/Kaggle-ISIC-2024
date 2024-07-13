@@ -267,6 +267,9 @@ def main(config):
     print(f"Shape of the train df : {train_df.shape}")
     print(f"Shape of the test df : {eval_df.shape}")
 
+    print(f"Unique labels in train_df : {train_df['target'].unique()}")
+    print(f"Unique labels in eval_df  : {eval_df['target'].unique()}")
+
     # Initialize DataModule
     train_transform = transforms.Compose([
         transforms.Resize((224, 224)),

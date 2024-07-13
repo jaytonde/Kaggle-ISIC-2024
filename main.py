@@ -325,7 +325,7 @@ def main(config):
     else:
         test_results = trainer.test(ckpt_path="best", datamodule=data_module)
     
-    save_results(config, eval_df, val_results)
+    save_results(config, eval_df, test_results)
     push_to_huggingface(config, out_dir)
     
     end_time = datetime.now()

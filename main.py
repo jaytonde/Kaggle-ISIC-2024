@@ -128,6 +128,7 @@ class ISICModel(L.LightningModule):
     def on_predict_epoch_end(self):
         all_preds  = torch.cat(self.predict_step_outputs).cpu().numpy()
         all_preds = 1 / (1 + np.exp(-all_preds))
+        print(all_preds)
         return all_preds
         
 class ISICDataModule(L.LightningDataModule):

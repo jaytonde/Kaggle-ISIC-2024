@@ -127,7 +127,7 @@ class ISICDataModule(L.LightningDataModule):
         if stage == "fit":
             self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
             self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
-        else stage == "test":
+        elif stage == "test":
             self.test_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
         
     def train_dataloader(self):

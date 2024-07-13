@@ -205,11 +205,11 @@ def push_to_huggingface(config, out_dir):
 
     print(f"All output folder files are pushed to huggingface repo for experiment : {config.experiment_name}")
 
-def save_results(config, eval_df, results):
+def save_results(config, eval_df, results, out_dir):
 
-    eval_df['preds_thre'] = test_results
+    eval_df['preds_thre'] = results
 
-    stacked               = torch.stack(tensor_list)
+    stacked               = torch.stack(results)
     eval_df["preds"]      = torch.clamp(stacked, min=0.0, max=1.0)
 
 
@@ -325,7 +325,7 @@ def main(config):
     else:
         test_results = trainer.test(ckpt_path="best", datamodule=data_module)
     
-    save_results(config, eval_df, test_results)
+    save_results(config, eval_df, test_results, out_dir)
     push_to_huggingface(config, out_dir)
     
     end_time = datetime.now()

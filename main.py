@@ -117,7 +117,7 @@ class ISICModel(L.LightningModule):
         self.validation_step_ground_truths.clear()
         self.log("ROC AUC metric", metric)
         
-    def predict_step(self, batch):
+    def test_step(self, batch):
         x = batch['image']
         y = batch['label']
         return self(x)
@@ -323,7 +323,7 @@ def main(config):
         print("No inference for full fit")
 
     else:
-        test_results = trainer.predict(ckpt_path="best", datamodule=data_module)
+        test_results = trainer.test(ckpt_path="best", datamodule=data_module)
     
     save_results(config, eval_df, val_results)
     push_to_huggingface(config, out_dir)

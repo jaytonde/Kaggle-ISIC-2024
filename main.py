@@ -106,8 +106,14 @@ class ISICModel(L.LightningModule):
         threshold         = 0.5 
         all_labels_binary = (all_labels > threshold).astype(int)
         all_preds_proba   = 1 / (1 + np.exp(-all_preds))
+
+        unique_labels = np.unique(all_labels)
+        if len(unique_labels) < 2:
+            print(f"Warning: Only one class present in labels. Unique labels: {unique_labels}")
+            metric = 0.5  # default value 
+        else:
+            metric = roc_auc_score(all_labels, all_preds_proba)
         
-        metric = roc_auc_score(all_labels, all_preds_proba)
         self.validation_step_outputs.clear()
         self.validation_step_ground_truths.clear()
         self.log("ROC AUC metric", metric)

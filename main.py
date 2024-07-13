@@ -126,7 +126,7 @@ class ISICModel(L.LightningModule):
         return y_hat
 
     def on_predict_epoch_end(self):
-        all_preds = torch.stack(self.predict_step_outputs)
+        all_preds  = torch.cat(self.predict_step_outputs).cpu().numpy()
         all_preds = 1 / (1 + np.exp(-all_preds))
         return all_preds
         

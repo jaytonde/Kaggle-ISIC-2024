@@ -25,7 +25,7 @@ artifacts_dir        : "./output"
 output_dir           : "${artifacts_dir}/${experiment_name}"
 training_filename    : "ISIC_train_data.csv"
 image_path           : '${data_dir}/train-image.hdf5'
-train_code_file      : "experiment.py"
+train_code_file      : "main.py"
 config_file          : "config.yaml"
 
 

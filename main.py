@@ -192,7 +192,7 @@ def push_to_huggingface(config, out_dir):
 
     api.upload_file(
         path_or_fileobj=config.train_code_file,
-        path_in_repo="experiment.py",
+        path_in_repo="main.py",
         repo_id=repo_id,
         repo_type="model",
         )

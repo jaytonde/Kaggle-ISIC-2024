@@ -117,7 +117,7 @@ class ISICModel(L.LightningModule):
         self.validation_step_ground_truths.clear()
         self.log("ROC AUC metric", metric)
         
-    def test_step(self, batch):
+    def predict_step(self, batch):
         x = batch['image']
         y = batch['label']
         return self(x)
@@ -137,8 +137,8 @@ class ISICDataModule(L.LightningDataModule):
         if stage == "fit":
             self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
             self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
-        elif stage == "test":
-            self.test_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
+        elif stage == "predict":
+            self.predict_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
         
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
@@ -146,8 +146,8 @@ class ISICDataModule(L.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
 
-    def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
+    def predict_dataloader(self):
+        return DataLoader(self.predict_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
 
 def get_transform(mode):
     if mode == "train":
@@ -325,7 +325,7 @@ def main(config):
         print("No inference for full fit")
 
     else:
-        test_results = trainer.test(ckpt_path="best", datamodule=data_module)
+        test_results = trainer.predict(ckpt_path="best", datamodule=data_module)
     
     save_results(config, eval_df, test_results, out_dir)
     push_to_huggingface(config, out_dir)

@@ -71,18 +71,19 @@ class ISICModel(L.LightningModule):
         return x
     
     def training_step(self, batch, batch_idx):
-        x     = batch['image']
-        y     = batch['label']
-        y_hat = self(x)
-        loss  = self.loss_fn(y_hat, y)
+        x      = batch['image']
+        y      = batch['label']
+        logits = self(x)
+        loss   = self.loss_fn(logits, y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        x     = batch['image']
-        y     = batch['label']
-        y_hat = self(x)
-        loss  = self.loss_fn(y_hat, y)
+        x      = batch['image']
+        y      = batch['label']
+        logits = self(x)
+        loss   = self.loss_fn(logits, y)
+        y_hat  = logits.sigmoid()
         self.validation_step_outputs.append(y_hat)
         self.validation_step_ground_truths.append(y)
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -100,23 +101,13 @@ class ISICModel(L.LightningModule):
         self.log("It is the end of last epoch", value)
         
     def on_validation_epoch_end(self):
-        all_preds  = torch.cat(self.validation_step_outputs).cpu().numpy()
-        all_labels = torch.cat(self.validation_step_ground_truths).cpu().numpy()
-
-        threshold         = 0.5 
-        all_labels_binary = (all_labels > threshold).astype(int)
-        all_preds_proba   = 1 / (1 + np.exp(-all_preds))
-
-        unique_labels = np.unique(all_labels)
-        if len(unique_labels) < 2:
-            print(f"Warning: Only one class present in labels. Unique labels: {unique_labels}")
-            metric = 0.5  # default value 
-        else:
-            metric = roc_auc_score(all_labels, all_preds_proba)
-        
+        all_preds  = torch.stack(self.validation_step_outputs)
+        all_labels = torch.stack(self.validation_step_ground_truths)
+        auroc      = BinaryAUROC()
+        metric     = auroc(all_preds, all_labels)
+        self.log("ROC AUC metric", metric)
         self.validation_step_outputs.clear()
         self.validation_step_ground_truths.clear()
-        self.log("ROC AUC metric", metric)
         
     def predict_step(self, batch, batch_idx):
         x     = batch['image']
@@ -126,9 +117,8 @@ class ISICModel(L.LightningModule):
         return y_hat
 
     def on_predict_epoch_end(self):
-        all_preds  = torch.cat(self.predict_step_outputs).cpu().numpy()
-        all_preds = 1 / (1 + np.exp(-all_preds))
-        print(all_preds)
+        all_preds = torch.stack(self.predict_step_outputs)
+        self.predict_step_outputs.clear()
         return all_preds
         
 class ISICDataModule(L.LightningDataModule):
@@ -217,14 +207,12 @@ def push_to_huggingface(config, out_dir):
 def save_results(config, eval_df, results, out_dir):
     print(f"Length of results : {len(results)}")
 
-    eval_df['preds_thre'] = results
-    stacked               = torch.stack(results)
-    eval_df["preds"]      = torch.clamp(stacked, min=0.0, max=1.0)
+    preds = []
+    for tnsr in results:
+        preds.append(tnsr[0].numpy()[0])
 
-    print(eval_df.shape)
-    print(eval_df.columns)
-    print(eval_df['preds_thre'][0:10])
-    print(eval_df['preds'][0:10])
+    eval_df['preds'] = preds
+    print(f"Shape of the eval_df : {eval_df.shape}")
 
     file_path             = out_dir + '/' +f"fold_{config.fold}_oof.csv"
     eval_df.to_csv(file_path, index=False)

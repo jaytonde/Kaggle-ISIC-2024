@@ -96,8 +96,7 @@ class ISICModel(L.LightningModule):
         return nn.BCEWithLogitsLoss()(y_hat, y.unsqueeze(1)) #[[TODO]]
     
     def on_train_epoch_end(self):
-        all_preds = torch.stack(self.training_step_outputs)
-        self.log("It is the end of last epoch", len(all_preds))
+        self.log("It is the end of last epoch")
         
     def on_validation_epoch_end(self):
         all_preds  = torch.cat(self.validation_step_outputs).cpu().numpy()

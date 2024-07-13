@@ -59,11 +59,11 @@ class ISICModel(L.LightningModule):
         
         self.model                = timm.create_model(config.model_id, pretrained=pretrained)
         if "convnext" in config.model_id:
-            self.model.head.fc    = nn.Linear(self.model.head.fc.in_features, 1)
+            self.model.head.fc    = nn.Linear(self.model.head.fc.in_features, 2)
         elif "efficientnet" in config.model_id:
-            self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
+            self.model.classifier = nn.Linear(self.model.classifier.in_features, 2)
         elif "resnet" in config.model_id:
-            self.model.fc         = nn.Linear(self.model.fc.in_features, 1)
+            self.model.fc         = nn.Linear(self.model.fc.in_features, 2)
    
     def forward(self, x):
         x = self.model(x)

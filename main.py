@@ -95,7 +95,7 @@ class ISICModel(L.LightningModule):
         return nn.BCEWithLogitsLoss()(y_hat, y.unsqueeze(1)) #[[TODO]]
     
     def on_train_epoch_end(self):
-        value = "Done"
+        value = 100
         self.log("It is the end of last epoch", value)
         
     def on_validation_epoch_end(self):

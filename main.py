@@ -21,6 +21,7 @@ from huggingface_hub import HfApi
 from huggingface_hub import login
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import KFold
 import torchvision.transforms as transforms
 from sklearn.model_selection import StratifiedKFold
@@ -53,8 +54,8 @@ class ISICDataset:
 class ISICModel(L.LightningModule):
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
         super(ISICModel, self).__init__()
-        self.training_step_outputs   = []
-        self.validation_step_outputs = []
+        self.validation_step_outputs       = []
+        self.validation_step_ground_truths = []
         
         self.model                = timm.create_model(config.model_id, pretrained=pretrained)
         if "convnext" in config.model_id:
@@ -83,6 +84,7 @@ class ISICModel(L.LightningModule):
         y_hat = self(x)
         loss  = self.loss_fn(y_hat, y)
         self.validation_step_outputs.append(y_hat)
+        self.validation_step_ground_truths.append(y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
@@ -98,9 +100,12 @@ class ISICModel(L.LightningModule):
         self.log("It is the end of last epoch", len(all_preds))
         
     def on_validation_epoch_end(self):
-        all_preds = torch.stack(self.validation_step_outputs)
+        all_preds  = torch.stack(self.validation_step_outputs)
+        all_labels = torch.stack(self.validation_step_outputs)
+        metric     = roc_auc_score(all_labels,all_preds)
         self.validation_step_outputs.clear()
-        self.log("It is the end of last validation epoch", len(all_preds))
+        self.validation_step_ground_truths.clear()
+        self.log("ROC AUC metric", metric)
         
     def predict_step(self, batch):
         x = batch['image']
@@ -119,15 +124,12 @@ class ISICDataModule(L.LightningDataModule):
         self.num_workers      = num_workers
 
     def setup(self, stage=None):
-        if stage:
-            tran, val_dataloader
-        else stage==test:
-            test
-        if self.test_transform is not None:
-            print(f"Got transform yeah.. : {self.test_transform}")
-        self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
-        self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
-
+        if stage == "fit":
+            self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
+            self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
+        else stage == "test":
+            self.test_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
+        
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
 
@@ -135,7 +137,7 @@ class ISICDataModule(L.LightningDataModule):
         return DataLoader(self.val_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
+        return DataLoader(self.test_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
 
 def get_transform(mode):
     if mode == "train":

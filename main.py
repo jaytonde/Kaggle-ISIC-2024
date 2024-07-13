@@ -109,7 +109,7 @@ class ISICModel(L.LightningModule):
         # If not, we need to apply a sigmoid function
         all_preds_proba = 1 / (1 + np.exp(-all_preds))
         
-        metric = roc_auc_score(all_labels_binary, all_preds_proba)
+        metric = roc_auc_score(all_labels, all_preds_proba)
         self.validation_step_outputs.clear()
         self.validation_step_ground_truths.clear()
         self.log("ROC AUC metric", metric)

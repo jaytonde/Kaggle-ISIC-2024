@@ -223,7 +223,8 @@ def save_results(config, eval_df, results, out_dir):
 
     print(eval_df.shape)
     print(eval_df.columns)
-    print(eval_df.head())
+    print(eval_df['preds_thre'][0:10])
+    print(eval_df['preds'][0:10])
 
     file_path             = out_dir + '/' +f"fold_{config.fold}_oof.csv"
     eval_df.to_csv(file_path, index=False)

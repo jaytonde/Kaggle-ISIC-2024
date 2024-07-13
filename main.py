@@ -74,7 +74,6 @@ class ISICModel(L.LightningModule):
         y     = batch['label']
         y_hat = self(x)
         loss  = self.loss_fn(y_hat, y)
-        self.training_step_outputs.append(y_hat)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     

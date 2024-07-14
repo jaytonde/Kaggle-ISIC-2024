@@ -54,6 +54,7 @@ class ISICDataset:
         return {'image':tensor_image, 'label':tensor_target}
 
 class ISICModel(L.LightningModule):
+
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
         super(ISICModel, self).__init__()
         self.validation_step_outputs       = []
@@ -77,7 +78,7 @@ class ISICModel(L.LightningModule):
         y      = batch['label']
         logits = self(x)
         loss   = self.loss_fn(logits, y)
-        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train_loss", loss)
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -88,7 +89,7 @@ class ISICModel(L.LightningModule):
         y_hat  = logits.sigmoid()
         self.validation_step_outputs.append(y_hat)
         self.validation_step_ground_truths.append(y)
-        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_loss", loss)
         return loss
     
     def configure_optimizers(self):

@@ -27,6 +27,7 @@ import torchvision.transforms as transforms
 from torchmetrics.classification import BinaryAUROC
 from sklearn.model_selection import StratifiedKFold
 from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
 from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding, set_seed
 
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
@@ -245,13 +246,20 @@ def main(config):
         else:
             name = f"fold_{config.fold}"
 
-        wandb.init(
-                        project = config.wandb_project_name,
-                        group   = config.experiment_name,
-                        name    = name,
-                        notes   = config.notes,
-                        config  = OmegaConf.to_container(config, resolve=True)
-                )
+        wandb_logger = WandbLogger(
+                                    project=config.wandb_project_name,
+                                    experiment   = config.experiment_name,
+                                    name    = name,
+                                    notes   = config.notes,
+                                    config  = OmegaConf.to_container(config, resolve=True)
+                                    )
+        # wandb.init(
+        #                 project = config.wandb_project_name,
+        #                 group   = config.experiment_name,
+        #                 name    = name,
+        #                 notes   = config.notes,
+        #                 config  = OmegaConf.to_container(config, resolve=True)
+        #         )
 
     dataset_df        = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
@@ -310,6 +318,7 @@ def main(config):
 
     # Initialize trainer
     trainer = Trainer(
+        logger=wandb_logger,
         max_epochs  = config.max_epochs,
         callbacks   = [checkpoint_callback],
         accelerator = "gpu",

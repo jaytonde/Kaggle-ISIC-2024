@@ -248,10 +248,7 @@ def main(config):
 
         wandb_logger = WandbLogger(
                                     project=config.wandb_project_name,
-                                    experiment   = config.experiment_name,
                                     name    = name,
-                                    notes   = config.notes,
-                                    config  = OmegaConf.to_container(config, resolve=True)
                                     )
         # wandb.init(
         #                 project = config.wandb_project_name,

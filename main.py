@@ -319,6 +319,7 @@ def main(config):
     # Initialize trainer
     trainer = Trainer(
         logger=wandb_logger,
+        log_every_n_steps = 10,
         max_epochs  = config.max_epochs,
         callbacks   = [checkpoint_callback],
         accelerator = "gpu",

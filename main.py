@@ -179,10 +179,10 @@ class ISICDataModule(L.LightningDataModule):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, drop_last=True)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
     def predict_dataloader(self):
-        return DataLoader(self.predict_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)
+        return DataLoader(self.predict_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
 def get_transform(mode):
     if mode == "train":
@@ -314,7 +314,9 @@ def main(config):
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize the tensor
     ])
     test_transform = transforms.Compose([
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),  # Convert PIL Image to tensor
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
     print(f"Image path : {config.image_path}")

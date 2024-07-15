@@ -118,9 +118,9 @@ class ISICModel(L.LightningModule):
         all_preds  = torch.cat(self.train_step_outputs)
         all_labels = torch.cat(self.train_step_ground_truths)
 
-        accuracy   = self.accuracy(all_preds.transpose(1, 2),all_labels.unsqueeze(1))
+        accuracy   = self.accuracy(all_preds,all_labels.unsqueeze(1))
         auc_roc    = self.auc_roc(all_preds,all_labels)
-        f1_score   = self.f1_score(all_preds.transpose(1, 2),all_labels.unsqueeze(1))
+        f1_score   = self.f1_score(all_preds,all_labels.unsqueeze(1))
 
         self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
                      on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -136,9 +136,9 @@ class ISICModel(L.LightningModule):
         print(f"Shape of the preds : {all_preds.shape}")
         print(f"Shape of the labels : {all_labels.shape}")
 
-        accuracy   = self.accuracy(all_preds.transpose(1, 2),all_labels.unsqueeze(1))
+        accuracy   = self.accuracy(all_preds,all_labels.unsqueeze(1))
         auc_roc    = self.auc_roc(all_preds,all_labels)
-        f1_score   = self.f1_score(all_preds.transpose(1, 2),all_labels.unsqueeze(1))
+        f1_score   = self.f1_score(all_preds,all_labels.unsqueeze(1))
 
         self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
                      on_step=False, on_epoch=True, prog_bar=True, logger=True)

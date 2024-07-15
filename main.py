@@ -147,7 +147,7 @@ class ISICModel(L.LightningModule):
         self.validation_step_ground_truths.clear()
         
     def on_predict_epoch_end(self):
-        all_preds = torch.stack(self.predict_step_outputs)
+        all_preds = torch.cat(self.predict_step_outputs)
         self.predict_step_outputs.clear()
         return all_preds
         

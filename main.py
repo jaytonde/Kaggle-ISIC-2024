@@ -176,7 +176,7 @@ class ISICDataModule(L.LightningDataModule):
             self.predict_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
         
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, drop_last=True)
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=1, shuffle=False, num_workers=self.num_workers)

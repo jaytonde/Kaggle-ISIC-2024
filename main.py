@@ -63,6 +63,10 @@ class ISICModel(L.LightningModule):
         self.validation_step_outputs       = []
         self.validation_step_ground_truths = []
         self.predict_step_outputs          = []
+
+        self.accuracy                      = BinaryAccuracy()
+        self.auc_roc                       = BinaryAUROC()
+        self.f1_score                      = BinaryF1Score()
         
         self.model                = timm.create_model(config.model_id, pretrained=pretrained)
         if "convnext" in config.model_id:

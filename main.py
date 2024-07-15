@@ -29,6 +29,7 @@ from sklearn.model_selection import StratifiedKFold
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding, set_seed
+from torchmetrics.classification import BinaryAUROC,BinaryAccuracy,BinaryF1Score
 
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
@@ -57,6 +58,8 @@ class ISICModel(L.LightningModule):
 
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
         super(ISICModel, self).__init__()
+        self.train_step_outputs            = []
+        self.train_step_ground_truths      = []
         self.validation_step_outputs       = []
         self.validation_step_ground_truths = []
         self.predict_step_outputs          = []
@@ -68,6 +71,8 @@ class ISICModel(L.LightningModule):
             self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
         elif "resnet" in config.model_id:
             self.model.fc         = nn.Linear(self.model.fc.in_features, 1)
+
+        self.save_hyperparameters()
    
     def forward(self, x):
         x = self.model(x)
@@ -78,7 +83,11 @@ class ISICModel(L.LightningModule):
         y      = batch['label']
         logits = self(x)
         loss   = self.loss_fn(logits, y)
-        self.log("train_loss", loss)
+        y_hat  = logits.sigmoid()
+
+        self.train_step_outputs.append(y_hat)
+        self.train_step_ground_truths.append(y)
+        self.log("train_loss", loss, on_step=True, logger=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -87,11 +96,53 @@ class ISICModel(L.LightningModule):
         logits = self(x)
         loss   = self.loss_fn(logits, y)
         y_hat  = logits.sigmoid()
+
         self.validation_step_outputs.append(y_hat)
         self.validation_step_ground_truths.append(y)
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, on_step=True, logger=True)
         return loss
     
+    def predict_step(self, batch, batch_idx):
+        x      = batch['image']
+        y      = batch['label']
+        logits = self(x)
+        y_hat  = logits.sigmoid()
+        self.predict_step_outputs.append(y_hat)
+        return y_hat
+
+    def on_train_epoch_end(self):
+        all_preds  = torch.stack(self.train_step_outputs)
+        all_labels = torch.stack(self.train_step_ground_truths)
+
+        accuracy   = self.accuracy(all_preds.squeeze(),all_labels)
+        auc_roc    = self.auc_roc(all_preds,all_labels)
+        f1_score   = self.f1_score(all_preds.squeeze(),all_labels)
+
+        self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
+                     on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+        self.train_step_outputs.clear()
+        self.train_step_ground_truths.clear()
+
+    def on_validation_epoch_end(self):
+        all_preds  = torch.stack(self.validation_step_outputs)
+        all_labels = torch.stack(self.validation_step_ground_truths)
+
+        accuracy   = self.accuracy(all_preds.squeeze(),all_labels)
+        auc_roc    = self.auc_roc(all_preds,all_labels)
+        f1_score   = self.f1_score(all_preds.squeeze(),all_labels)
+
+        self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
+                     on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+        self.validation_step_outputs.clear()
+        self.validation_step_ground_truths.clear()
+        
+    def on_predict_epoch_end(self):
+        all_preds = torch.stack(self.predict_step_outputs)
+        self.predict_step_outputs.clear()
+        return all_preds
+        
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
@@ -99,31 +150,6 @@ class ISICModel(L.LightningModule):
     def loss_fn(self, y_hat, y):
         return nn.BCEWithLogitsLoss()(y_hat, y.unsqueeze(1)) #[[TODO]]
     
-    def on_train_epoch_end(self):
-        value = 100
-        self.log("It is the end of last epoch", value)
-        
-    def on_validation_epoch_end(self):
-        all_preds  = torch.stack(self.validation_step_outputs)
-        all_labels = torch.stack(self.validation_step_ground_truths)
-        auroc      = BinaryAUROC()
-        metric     = auroc(all_preds, all_labels)
-        self.log("ROC AUC metric", metric)
-        self.validation_step_outputs.clear()
-        self.validation_step_ground_truths.clear()
-        
-    def predict_step(self, batch, batch_idx):
-        x     = batch['image']
-        y     = batch['label']
-        y_hat = self(x)
-        self.predict_step_outputs.append(y_hat)
-        return y_hat
-
-    def on_predict_epoch_end(self):
-        all_preds = torch.stack(self.predict_step_outputs)
-        self.predict_step_outputs.clear()
-        return all_preds
-        
 class ISICDataModule(L.LightningDataModule):
     def __init__(self, hdf5_file_path, train_df, val_df, train_transform=None, test_transform=None, batch_size=32, num_workers=4):
         super().__init__()
@@ -248,16 +274,12 @@ def main(config):
             name = f"fold_{config.fold}"
 
         wandb_logger = WandbLogger(
-                                    project=config.wandb_project_name,
+                                    project = config.wandb_project_name,
                                     name    = name,
+                                    gorup   = config.experiment_name,
+                                    notes   = config.notes,
+                                    config  = OmegaConf.to_container(config, resolve=True)
                                     )
-        # wandb.init(
-        #                 project = config.wandb_project_name,
-        #                 group   = config.experiment_name,
-        #                 name    = name,
-        #                 notes   = config.notes,
-        #                 config  = OmegaConf.to_container(config, resolve=True)
-        #         )
 
     dataset_df        = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
@@ -316,7 +338,7 @@ def main(config):
 
     # Initialize trainer
     trainer = Trainer(
-        logger=wandb_logger,
+        logger            = wandb_logger,
         log_every_n_steps = 10,
         max_epochs  = config.max_epochs,
         callbacks   = [checkpoint_callback],

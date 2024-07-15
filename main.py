@@ -129,7 +129,6 @@ class ISICModel(L.LightningModule):
         self.train_step_ground_truths.clear()
 
     def on_validation_epoch_end(self):
-        print(self.validation_step_outputs)
         all_preds  = torch.cat(self.validation_step_outputs)
         all_labels = torch.cat(self.validation_step_ground_truths)
 

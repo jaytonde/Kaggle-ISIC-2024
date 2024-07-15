@@ -132,6 +132,9 @@ class ISICModel(L.LightningModule):
         all_preds  = torch.stack(self.validation_step_outputs)
         all_labels = torch.stack(self.validation_step_ground_truths)
 
+        print(f"Shape of the preds : {all_preds.shape}")
+        print(f"Shape of the labels : {all_labels.shape}")
+
         accuracy   = self.accuracy(all_preds.squeeze(),all_labels)
         auc_roc    = self.auc_roc(all_preds,all_labels)
         f1_score   = self.f1_score(all_preds.squeeze(),all_labels)

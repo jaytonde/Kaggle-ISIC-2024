@@ -129,12 +129,12 @@ class ISICModel(L.LightningModule):
         self.train_step_ground_truths.clear()
 
     def on_validation_epoch_end(self):
-        all_preds  = torch.stack(self.validation_step_outputs)
+        all_preds  = torch.stack(self.validation_step_outputs.squeeze())
         all_labels = torch.stack(self.validation_step_ground_truths)
 
-        accuracy   = self.accuracy(all_preds.squeeze(),all_labels)
+        accuracy   = self.accuracy(all_preds,all_labels)
         auc_roc    = self.auc_roc(all_preds,all_labels)
-        f1_score   = self.f1_score(all_preds.squeeze(),all_labels)
+        f1_score   = self.f1_score(all_preds,all_labels)
 
         self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
                      on_step=False, on_epoch=True, prog_bar=True, logger=True)

@@ -246,9 +246,7 @@ def push_to_huggingface(config, out_dir):
 def save_results(config, eval_df, results, out_dir):
     print(f"Length of results : {len(results)}")
 
-    preds = []
-    for tnsr in results:
-        preds.append(tnsr[0].numpy()[0])
+    preds = torch.cat(results)
 
     eval_df['preds'] = preds
     print(f"Shape of the eval_df : {eval_df.shape}")

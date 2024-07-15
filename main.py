@@ -135,9 +135,9 @@ class ISICModel(L.LightningModule):
         print(f"Shape of the preds : {all_preds.shape}")
         print(f"Shape of the labels : {all_labels.shape}")
 
-        accuracy   = self.accuracy(all_preds.squeeze(),all_labels)
+        accuracy   = self.accuracy(all_preds,all_labels.unsqueeze())
         auc_roc    = self.auc_roc(all_preds,all_labels)
-        f1_score   = self.f1_score(all_preds.squeeze(),all_labels)
+        f1_score   = self.f1_score(all_preds,all_labels.unsqueeze())
 
         self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
                      on_step=False, on_epoch=True, prog_bar=True, logger=True)

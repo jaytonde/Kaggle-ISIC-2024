@@ -151,13 +151,16 @@ class ISICModel(L.LightningModule):
         return all_preds
         
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=config.learning_rate)
         return optimizer
     
     def loss_fn(self, y_hat, y):
+        print(f"y_hat : {y_hat}")
+        print(f"y : {y}}")
         return nn.BCEWithLogitsLoss()(y_hat, y.unsqueeze(1)) #[[TODO]]
     
 class ISICDataModule(L.LightningDataModule):
+
     def __init__(self, hdf5_file_path, train_df, val_df, train_transform=None, test_transform=None, batch_size=32, num_workers=4):
         super().__init__()
         self.hdf5_file_path   = hdf5_file_path

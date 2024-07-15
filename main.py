@@ -276,7 +276,7 @@ def main(config):
         wandb_logger = WandbLogger(
                                     project = config.wandb_project_name,
                                     name    = name,
-                                    gorup   = config.experiment_name,
+                                    group   = config.experiment_name,
                                     notes   = config.notes,
                                     config  = OmegaConf.to_container(config, resolve=True)
                                     )

@@ -30,11 +30,11 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding, set_seed
 from torchmetrics.classification import BinaryAUROC,BinaryAccuracy,BinaryF1Score
-
+load_dotenv()
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
 
-load_dotenv()
+
 
 class ISICDataset:
     def __init__(self, image_file, df, transform=None):
@@ -115,8 +115,8 @@ class ISICModel(L.LightningModule):
         return y_hat
 
     def on_train_epoch_end(self):
-        all_preds  = torch.stack(self.train_step_outputs)
-        all_labels = torch.stack(self.train_step_ground_truths)
+        all_preds  = torch.cat(self.train_step_outputs)
+        all_labels = torch.cat(self.train_step_ground_truths)
 
         accuracy   = self.accuracy(all_preds.transpose(1, 2),all_labels.unsqueeze(1))
         auc_roc    = self.auc_roc(all_preds,all_labels)
@@ -129,8 +129,9 @@ class ISICModel(L.LightningModule):
         self.train_step_ground_truths.clear()
 
     def on_validation_epoch_end(self):
-        all_preds  = torch.stack(self.validation_step_outputs)
-        all_labels = torch.stack(self.validation_step_ground_truths)
+        print(self.validation_step_outputs)
+        all_preds  = torch.cat(self.validation_step_outputs)
+        all_labels = torch.cat(self.validation_step_ground_truths)
 
         print(f"Shape of the preds : {all_preds.shape}")
         print(f"Shape of the labels : {all_labels.shape}")
@@ -176,7 +177,7 @@ class ISICDataModule(L.LightningDataModule):
             self.predict_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
         
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, drop_last=True)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
@@ -184,19 +185,20 @@ class ISICDataModule(L.LightningDataModule):
     def predict_dataloader(self):
         return DataLoader(self.predict_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
+
 def get_transform(mode):
     if mode == "train":
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
-            transforms.ToTensor(),  # Convert PIL Image to tensor
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize the tensor
+            transforms.ToTensor(),  
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  
         ])
         return transform
 
     elif mode == "test":
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
-            transforms.ToTensor(),  # Convert PIL Image to tensor
+            transforms.ToTensor(),  
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         return transform
@@ -261,7 +263,6 @@ def main(config):
     start_time = datetime.now()
 
     print(f"Experiment name : {config.experiment_name} having model : {config.model_id} is started..")
-
     if config.debug:
         print(f"Debugging mode is on.....")
     if config.full_fit:
@@ -272,7 +273,6 @@ def main(config):
         out_dir = os.path.join(config.output_dir,f"fold_{config.fold}")
 
     os.makedirs(out_dir, exist_ok = True)
-
     set_seed(config.seed)
 
     if config.wandb_log:
@@ -281,7 +281,6 @@ def main(config):
             name = "full_fit"
         else:
             name = f"fold_{config.fold}"
-
         wandb_logger = WandbLogger(
                                     project = config.wandb_project_name,
                                     name    = name,
@@ -290,7 +289,7 @@ def main(config):
                                     config  = OmegaConf.to_container(config, resolve=True)
                                     )
 
-    dataset_df        = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
+    dataset_df            = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
     if config.debug:
         train_df          = dataset_df[0:1000]
@@ -306,28 +305,13 @@ def main(config):
     print(f"Shape of the train df : {train_df.shape}")
     print(f"Shape of the test df : {eval_df.shape}")
 
-    print(f"Unique labels in train_df : {train_df['target'].unique()}")
-    print(f"Unique labels in eval_df  : {eval_df['target'].unique()}")
-
     # Initialize DataModule
-    train_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),  # Convert PIL Image to tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize the tensor
-    ])
-    test_transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),  # Convert PIL Image to tensor
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-
-    print(f"Image path : {config.image_path}")
     data_module = ISICDataModule(
         hdf5_file_path  = config.image_path,
         train_df        = train_df,
         val_df          = eval_df,
-        train_transform = train_transform,
-        test_transform  = test_transform,
+        train_transform = get_transform("train"),
+        test_transform  = get_transform("test"),
         batch_size      = config.batch_size,
         num_workers     = config.num_workers
     )

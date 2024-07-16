@@ -21,7 +21,7 @@ from huggingface_hub import HfApi
 from huggingface_hub import login
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, auc, roc_curve
 from sklearn.model_selection import KFold
 import torchvision.transforms as transforms
 from torchmetrics.classification import BinaryAUROC
@@ -58,6 +58,7 @@ class ISICModel(L.LightningModule):
 
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
         super(ISICModel, self).__init__()
+        self.config                        = config
         self.train_step_outputs            = []
         self.train_step_ground_truths      = []
         self.validation_step_outputs       = []
@@ -128,19 +129,38 @@ class ISICModel(L.LightningModule):
         self.train_step_outputs.clear()
         self.train_step_ground_truths.clear()
 
-    def on_validation_epoch_end(self):
-        all_preds  = torch.cat(self.validation_step_outputs)
-        all_labels = torch.cat(self.validation_step_ground_truths)
+    def on_validation_epoch_end(self): 
+        tpr_threshold  = 0.8
+
+        all_preds  -   = torch.cat(self.validation_step_outputs)
+        all_labels     = torch.cat(self.validation_step_ground_truths)
 
         print(f"Shape of the preds : {all_preds.shape}")
         print(f"Shape of the labels : {all_labels.shape}")
 
-        accuracy   = self.accuracy(all_preds,all_labels.unsqueeze(1))
-        auc_roc    = self.auc_roc(all_preds,all_labels)
-        f1_score   = self.f1_score(all_preds,all_labels.unsqueeze(1))
+        # accuracy   = self.accuracy(all_preds,all_labels.unsqueeze(1))
+        # auc_roc    = self.auc_roc(all_preds,all_labels)
+        # f1_score   = self.f1_score(all_preds,all_labels.unsqueeze(1))
 
-        self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
-                     on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        fpr, tpr, thresholds = roc_curve(all_labels, all_preds)
+        print(f"fpr : {fpr}")
+        print(f"tpr : {tpr}")
+        print(f"thresholds : {thresholds}")
+    
+        mask = tpr >= tpr_threshold
+        if np.sum(mask) < 2:
+            raise ValueError("Not enough points above the TPR threshold for pAUC calculation.")
+        
+        fpr_above_threshold = fpr[mask]
+        tpr_above_threshold = tpr[mask]
+
+        print(f"tpr_threshold : {tpr_threshold}")
+        
+        partial_auc = auc(fpr_above_threshold, tpr_above_threshold)
+        
+        pauc = partial_auc * (1 - tpr_threshold)
+
+        self.log_dict({"pauc":pauc}, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
         self.validation_step_outputs.clear()
         self.validation_step_ground_truths.clear()
@@ -151,12 +171,12 @@ class ISICModel(L.LightningModule):
         return all_preds
         
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=config.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
         return optimizer
     
     def loss_fn(self, y_hat, y):
         print(f"y_hat : {y_hat}")
-        print(f"y : {y}}")
+        print(f"y : {y}")
         return nn.BCEWithLogitsLoss()(y_hat, y.unsqueeze(1)) #[[TODO]]
     
 class ISICDataModule(L.LightningDataModule):

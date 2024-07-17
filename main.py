@@ -12,6 +12,7 @@ import pandas as pd
 import lightning as L
 from PIL import Image
 from io import BytesIO
+import albumentations
 from datetime import datetime
 from datasets import Dataset
 from dotenv import load_dotenv
@@ -130,9 +131,9 @@ class ISICModel(L.LightningModule):
         self.train_step_ground_truths.clear()
 
     def on_validation_epoch_end(self): 
-        tpr_threshold  = 0.8
+        self.config.tpr_threshold  = 0.5
 
-        all_preds  -   = torch.cat(self.validation_step_outputs)
+        all_preds      = torch.cat(self.validation_step_outputs)
         all_labels     = torch.cat(self.validation_step_ground_truths)
 
         print(f"Shape of the preds : {all_preds.shape}")
@@ -147,18 +148,18 @@ class ISICModel(L.LightningModule):
         print(f"tpr : {tpr}")
         print(f"thresholds : {thresholds}")
     
-        mask = tpr >= tpr_threshold
+        mask = tpr >= self.config.tpr_threshold
         if np.sum(mask) < 2:
             raise ValueError("Not enough points above the TPR threshold for pAUC calculation.")
         
         fpr_above_threshold = fpr[mask]
         tpr_above_threshold = tpr[mask]
 
-        print(f"tpr_threshold : {tpr_threshold}")
+        print(f"tpr_threshold : {self.config.tpr_threshold}")
         
         partial_auc = auc(fpr_above_threshold, tpr_above_threshold)
         
-        pauc = partial_auc * (1 - tpr_threshold)
+        pauc = partial_auc * (1 - self.config.tpr_threshold)
 
         self.log_dict({"pauc":pauc}, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
@@ -208,20 +209,40 @@ class ISICDataModule(L.LightningDataModule):
         return DataLoader(self.predict_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
 
-def get_transform(mode):
+def get_transform(mode, image_size=224):
     if mode == "train":
-        transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),  
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  
+        transform = albumentations.Compose([
+            albumentations.Transpose(p=0.5),
+            albumentations.VerticalFlip(p=0.5),
+            albumentations.HorizontalFlip(p=0.5),
+            albumentations.RandomBrightness(limit=0.2, p=0.75),
+            albumentations.RandomContrast(limit=0.2, p=0.75),
+            albumentations.OneOf([
+                albumentations.MotionBlur(blur_limit=5),
+                albumentations.MedianBlur(blur_limit=5),
+                albumentations.GaussianBlur(blur_limit=5),
+                albumentations.GaussNoise(var_limit=(5.0, 30.0)),
+            ], p=0.7),
+
+            albumentations.OneOf([
+                albumentations.OpticalDistortion(distort_limit=1.0),
+                albumentations.GridDistortion(num_steps=5, distort_limit=1.),
+                albumentations.ElasticTransform(alpha=3),
+            ], p=0.7),
+
+            albumentations.CLAHE(clip_limit=4.0, p=0.7),
+            albumentations.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=0.5),
+            albumentations.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, border_mode=0, p=0.85),
+            albumentations.Resize(image_size, image_size),
+            albumentations.Cutout(max_h_size=int(image_size * 0.375), max_w_size=int(image_size * 0.375), num_holes=1, p=0.7),
+            albumentations.Normalize()
         ])
         return transform
 
     elif mode == "test":
-        transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),  
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transform = albumentations.Compose([
+            albumentations.Resize(image_size, image_size),
+            albumentations.Normalize()
         ])
         return transform
     else:

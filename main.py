@@ -140,14 +140,16 @@ class ISICModel(L.LightningModule):
     
         mask = tpr >= self.config.tpr_threshold
         if np.sum(mask) < 2:
+            pauc = 0.123456
             print("Not enough points above the TPR threshold for pAUC calculation.")
         
-        fpr_above_threshold = fpr[mask]
-        tpr_above_threshold = tpr[mask]
-        
-        partial_auc = auc(fpr_above_threshold, tpr_above_threshold)
-        
-        pauc = partial_auc * (1 - self.config.tpr_threshold)
+        else:
+            fpr_above_threshold = fpr[mask]
+            tpr_above_threshold = tpr[mask]
+            
+            partial_auc = auc(fpr_above_threshold, tpr_above_threshold)
+            
+            pauc = partial_auc * (1 - self.config.tpr_threshold)
 
         self.log_dict({"pauc":pauc}, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 

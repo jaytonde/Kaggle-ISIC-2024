@@ -337,8 +337,8 @@ def main(config):
         hdf5_file_path  = config.image_path,
         train_df        = train_df,
         val_df          = eval_df,
-        train_transform = get_transform("train"),
-        test_transform  = get_transform("test"),
+        train_transform = get_transform("train", config.image_size),
+        test_transform  = get_transform("test", config.image_size),
         batch_size      = config.batch_size,
         num_workers     = config.num_workers
     )

@@ -14,4 +14,3 @@ huggingface-hub
 scikit-learn
 discord.py
 h5py
-albumentations=1.4.11

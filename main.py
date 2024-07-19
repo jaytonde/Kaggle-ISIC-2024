@@ -55,7 +55,7 @@ class ISICDataset:
         tensor_image  = self.transform(image=pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
         
-        return {'image':tensor_image, 'label':tensor_target}
+        return {'image':tensor_image['image'], 'label':tensor_target}
 
 class ISICModel(L.LightningModule):
 
@@ -136,17 +136,7 @@ class ISICModel(L.LightningModule):
         all_preds      = torch.cat(self.validation_step_outputs)
         all_labels     = torch.cat(self.validation_step_ground_truths)
 
-        print(f"Shape of the preds : {all_preds.shape}")
-        print(f"Shape of the labels : {all_labels.shape}")
-
-        # accuracy   = self.accuracy(all_preds,all_labels.unsqueeze(1))
-        # auc_roc    = self.auc_roc(all_preds,all_labels)
-        # f1_score   = self.f1_score(all_preds,all_labels.unsqueeze(1))
-
         fpr, tpr, thresholds = roc_curve(all_labels, all_preds)
-        print(f"fpr : {fpr}")
-        print(f"tpr : {tpr}")
-        print(f"thresholds : {thresholds}")
     
         mask = tpr >= self.config.tpr_threshold
         if np.sum(mask) < 2:
@@ -154,8 +144,6 @@ class ISICModel(L.LightningModule):
         
         fpr_above_threshold = fpr[mask]
         tpr_above_threshold = tpr[mask]
-
-        print(f"tpr_threshold : {self.config.tpr_threshold}")
         
         partial_auc = auc(fpr_above_threshold, tpr_above_threshold)
         
@@ -176,9 +164,7 @@ class ISICModel(L.LightningModule):
         return optimizer
     
     def loss_fn(self, y_logits, y):
-        print(f"y_hat : {y_logits}")
-        print(f"y : {y}")
-        return nn.BCEWithLogitsLoss()(y_logits, y.unsqueeze(1)) #[[TODO]]
+        return nn.BCEWithLogitsLoss()(y_logits, y.unsqueeze(1))
     
 class ISICDataModule(L.LightningDataModule):
 
@@ -232,7 +218,7 @@ def get_transform(mode, image_size=224):
             albumentations.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, border_mode=0, p=0.85),
             albumentations.Resize(image_size, image_size),
             albumentations.Normalize(),
-            ToTensorV2()
+            ToTensorV2(),
         ])
         return transform
 

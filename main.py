@@ -22,6 +22,7 @@ from huggingface_hub import HfApi
 from huggingface_hub import login
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader
+from albumentations.pytorch import ToTensorV2
 from sklearn.metrics import roc_auc_score, auc, roc_curve
 from sklearn.model_selection import KFold
 import torchvision.transforms as transforms
@@ -50,7 +51,8 @@ class ISICDataset:
         image_id      = self.df.iloc[idx]['isic_id']
         image_data    = self.image_file[image_id][()]
         pil_image     = Image.open(io.BytesIO(image_data))
-        tensor_image  = self.transform(pil_image)
+        pil_image     = np.array(pil_image)
+        tensor_image  = self.transform(image=pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
         
         return {'image':tensor_image, 'label':tensor_target}
@@ -131,8 +133,6 @@ class ISICModel(L.LightningModule):
         self.train_step_ground_truths.clear()
 
     def on_validation_epoch_end(self): 
-        self.config.tpr_threshold  = 0.5
-
         all_preds      = torch.cat(self.validation_step_outputs)
         all_labels     = torch.cat(self.validation_step_ground_truths)
 
@@ -175,10 +175,10 @@ class ISICModel(L.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
         return optimizer
     
-    def loss_fn(self, y_hat, y):
-        print(f"y_hat : {y_hat}")
+    def loss_fn(self, y_logits, y):
+        print(f"y_hat : {y_logits}")
         print(f"y : {y}")
-        return nn.BCEWithLogitsLoss()(y_hat, y.unsqueeze(1)) #[[TODO]]
+        return nn.BCEWithLogitsLoss()(y_logits, y.unsqueeze(1)) #[[TODO]]
     
 class ISICDataModule(L.LightningDataModule):
 
@@ -208,15 +208,12 @@ class ISICDataModule(L.LightningDataModule):
     def predict_dataloader(self):
         return DataLoader(self.predict_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
-
 def get_transform(mode, image_size=224):
     if mode == "train":
         transform = albumentations.Compose([
             albumentations.Transpose(p=0.5),
             albumentations.VerticalFlip(p=0.5),
             albumentations.HorizontalFlip(p=0.5),
-            albumentations.RandomBrightness(limit=0.2, p=0.75),
-            albumentations.RandomContrast(limit=0.2, p=0.75),
             albumentations.OneOf([
                 albumentations.MotionBlur(blur_limit=5),
                 albumentations.MedianBlur(blur_limit=5),
@@ -234,15 +231,16 @@ def get_transform(mode, image_size=224):
             albumentations.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=0.5),
             albumentations.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, border_mode=0, p=0.85),
             albumentations.Resize(image_size, image_size),
-            albumentations.Cutout(max_h_size=int(image_size * 0.375), max_w_size=int(image_size * 0.375), num_holes=1, p=0.7),
-            albumentations.Normalize()
+            albumentations.Normalize(),
+            ToTensorV2()
         ])
         return transform
 
     elif mode == "test":
         transform = albumentations.Compose([
             albumentations.Resize(image_size, image_size),
-            albumentations.Normalize()
+            albumentations.Normalize(),
+            ToTensorV2(),
         ])
         return transform
     else:

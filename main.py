@@ -133,8 +133,8 @@ class ISICModel(L.LightningModule):
         self.train_step_ground_truths.clear()
 
     def on_validation_epoch_end(self): 
-        all_preds      = torch.cat(self.validation_step_outputs)
-        all_labels     = torch.cat(self.validation_step_ground_truths)
+        all_preds      = torch.cat(self.validation_step_outputs).cpu()
+        all_labels     = torch.cat(self.validation_step_ground_truths).cpu()
 
         fpr, tpr, thresholds = roc_curve(all_labels, all_preds)
     

@@ -140,7 +140,7 @@ class ISICModel(L.LightningModule):
     
         mask = tpr >= self.config.tpr_threshold
         if np.sum(mask) < 2:
-            raise ValueError("Not enough points above the TPR threshold for pAUC calculation.")
+            print("Not enough points above the TPR threshold for pAUC calculation.")
         
         fpr_above_threshold = fpr[mask]
         tpr_above_threshold = tpr[mask]

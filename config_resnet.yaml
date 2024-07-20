@@ -1,12 +1,12 @@
 #Naming
-experiment_name      : "ISIC-EXP-1"
+experiment_name      : "ISIC-EXP-2"
 
 #Model parameter's
-model_id             : 'efficientnet_b0'
+model_id             : 'resnet18'
 full_fit             : False
 debug                : False
 n_folds              : 5
-batch_size           : 64
+batch_size           : 32
 num_classes          : 2
 num_workers          : 4
 max_epochs           : 3
@@ -14,7 +14,8 @@ learning_rate        : 1e-5
 fold                 : 0
 seed                 : 2024
 tpr_threshold        : 0.8
-image_size           : 312
+image_size           : 384
+dropout              : 0.5
 
 #Logging
 wandb_log            : True

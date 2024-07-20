@@ -353,6 +353,7 @@ def main(config):
         dirpath    = out_dir,
         filename   = 'best-checkpoint',
         save_top_k = 1,
+        save_last  = True,
         verbose    = True,
         monitor    = 'val_loss',
         mode       = 'min'

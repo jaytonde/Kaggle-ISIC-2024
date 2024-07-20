@@ -326,7 +326,7 @@ def main(config):
             train_df          = dataset_df
             eval_df           = None
         else:
-            train_df          = dataset_df[dataset_df["fold"] != config.fold]
+            train_df          = dataset_df[(dataset_df["fold"] != config.fold) & (dataset_df["fold"] != -1)]
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
 
     print(f"Shape of the train df : {train_df.shape}")

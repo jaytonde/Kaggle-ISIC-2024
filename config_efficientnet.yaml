@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-2"
+experiment_name      : "ISIC-EXP-3"
 
 #Model parameter's
 model_id             : 'efficientnet_b0'
@@ -9,7 +9,7 @@ n_folds              : 5
 batch_size           : 64
 num_classes          : 2
 num_workers          : 4
-max_epochs           : 10
+max_epochs           : 20
 learning_rate        : 1e-5
 fold                 : 0
 seed                 : 2024
@@ -19,7 +19,7 @@ image_size           : 312
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "balanced dataset"
+notes                : "balanced dataset and 20 epochs"
 
 #Files and paths
 data_dir             : "./input"

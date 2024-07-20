@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-1"
+experiment_name      : "ISIC-EXP-2"
 
 #Model parameter's
 model_id             : 'efficientnet_b0'
@@ -19,7 +19,7 @@ image_size           : 312
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "First experiment of the competition"
+notes                : "balanced dataset"
 
 #Files and paths
 data_dir             : "./input"

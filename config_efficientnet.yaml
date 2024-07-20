@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-4"
+experiment_name      : "ISIC-EXP-5"
 
 #Model parameter's
 model_id             : 'efficientnet_b0'
@@ -19,7 +19,7 @@ image_size           : 312
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "balanced dataset and 50 epochs"
+notes                : "balanced dataset and 80 epochs"
 
 #Files and paths
 data_dir             : "./input"

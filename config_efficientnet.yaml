@@ -9,7 +9,7 @@ n_folds              : 5
 batch_size           : 64
 num_classes          : 2
 num_workers          : 4
-max_epochs           : 20
+max_epochs           : 25
 learning_rate        : 1e-5
 fold                 : 0
 seed                 : 2024
@@ -19,7 +19,7 @@ image_size           : 312
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "balanced dataset and 20 epochs"
+notes                : "balanced dataset and 25 epochs"
 
 #Files and paths
 data_dir             : "./input"

@@ -277,7 +277,7 @@ def load_image(row, image_file):
     image_id   = row['isic_id']
     image_data = image_file[image_id][()]
     pil_image  = Image.open(io.BytesIO(image_data))
-    return np.array(pil_image)
+    return wandb.Image(np.array(pil_image))
 
 def save_results(config, eval_df, results, out_dir, wandb_logger):
     print(f"Length of results : {len(results)}")

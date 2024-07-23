@@ -273,7 +273,7 @@ def push_to_huggingface(config, out_dir):
 
     print(f"All output folder files are pushed to huggingface repo for experiment : {config.experiment_name}")
 
-def load_image(row):
+def load_image(row, image_file):
     image_id   = row['isic_id']
     image_data = image_file[image_id][()]
     pil_image  = Image.open(io.BytesIO(image_data))
@@ -287,7 +287,7 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
 
     print("Logging images to wandb.")
     image_file       = h5py.File(config.image_path, 'r')
-    eval_df['image'] = eval_df.apply(load_image, axis=1) 
+    eval_df['image'] = eval_df.apply(lambda row: load_image(row, image_file), axis=1) 
     wandb_logger.log(dataframe=eval_df[['isic_id','image','target','preds']])
     del eval_df['image']
     print("Logging images to wandb completed successfully.")

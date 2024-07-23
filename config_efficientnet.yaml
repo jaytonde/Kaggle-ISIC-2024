@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "test wandb table"
+experiment_name      : "test_wandb_table"
 
 #Model parameter's
 model_id             : 'efficientnet_b0'

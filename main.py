@@ -279,16 +279,16 @@ def load_image(row):
     pil_image  = Image.open(io.BytesIO(image_data))
     return np.array(pil_image)
 
-def save_results(config, eval_df, results, out_dir):
+def save_results(config, eval_df, results, out_dir, wandb_logger):
     print(f"Length of results : {len(results)}")
 
     preds            = torch.cat(results)
     eval_df['preds'] = preds
 
     print("Logging images to wandb.")
-    image_file       = h5py.File(config.image_file, 'r')
+    image_file       = h5py.File(config.image_path, 'r')
     eval_df['image'] = eval_df.apply(load_image, axis=1) 
-    wandb.log(dataframe=eval_df[['isic_id','image','target','preds']])
+    wandb_logger.log(dataframe=eval_df[['isic_id','image','target','preds']])
     del eval_df['image']
     print("Logging images to wandb completed successfully.")
 
@@ -392,7 +392,7 @@ def main(config):
     else:
         test_results = trainer.predict(ckpt_path="best", datamodule=data_module)
     
-    save_results(config, eval_df, test_results, out_dir)
+    save_results(config, eval_df, test_results, out_dir, wandb_logger)
     push_to_huggingface(config, out_dir)
     
     end_time = datetime.now()

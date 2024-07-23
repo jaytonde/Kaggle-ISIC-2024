@@ -288,7 +288,11 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
     print("Logging images to wandb.")
     image_file       = h5py.File(config.image_path, 'r')
     eval_df['image'] = eval_df.apply(lambda row: load_image(row, image_file), axis=1) 
-    wandb_logger.log(dataframe=eval_df[['isic_id','image','target','preds']])
+
+    columns = ['isic_id','image','target','preds']
+    data    = eval_df[['isic_id','image','target','preds']].values.tolist()
+    wandb_logger.log_table(key="validation data", columns=columns, data=data)
+
     del eval_df['image']
     print("Logging images to wandb completed successfully.")
 

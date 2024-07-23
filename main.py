@@ -273,12 +273,25 @@ def push_to_huggingface(config, out_dir):
 
     print(f"All output folder files are pushed to huggingface repo for experiment : {config.experiment_name}")
 
+def load_image(row):
+    image_id   = row['isic_id']
+    image_data = image_file[image_id][()]
+    pil_image  = Image.open(io.BytesIO(image_data))
+    return np.array(pil_image)
+
 def save_results(config, eval_df, results, out_dir):
     print(f"Length of results : {len(results)}")
 
-    preds = torch.cat(results)
-
+    preds            = torch.cat(results)
     eval_df['preds'] = preds
+
+    print("Logging images to wandb.")
+    image_file       = h5py.File(config.image_file, 'r')
+    eval_df['image'] = eval_df.apply(load_image, axis=1) 
+    wandb.log(dataframe=eval_df[['isic_id','image','target','preds']])
+    del eval_df['image']
+    print("Logging images to wandb completed successfully.")
+
     print(f"Shape of the eval_df : {eval_df.shape}")
 
     file_path             = out_dir + '/' +f"fold_{config.fold}_oof.csv"

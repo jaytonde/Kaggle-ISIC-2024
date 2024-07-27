@@ -6,10 +6,10 @@ model_id             : 'resnet18'
 full_fit             : False
 debug                : False
 n_folds              : 5
-batch_size           : 64
+batch_size           : 32
 num_classes          : 2
 num_workers          : 4
-max_epochs           : 5
+max_epochs           : 50
 learning_rate        : 1e-5
 fold                 : 0
 seed                 : 2024
@@ -26,7 +26,7 @@ notes                : "First experiment of the resnet model"
 data_dir             : "./input"
 artifacts_dir        : "./output"
 output_dir           : "${artifacts_dir}/${experiment_name}"
-training_filename    : "ISIC_train_data.csv"
+training_filename    : "ISIC_train_data_balanced.csv"
 image_path           : '${data_dir}/train-image.hdf5'
 train_code_file      : "main.py"
 config_file          : "config.yaml"

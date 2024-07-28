@@ -65,7 +65,6 @@ class GeM(nn.Module):
         self.eps = eps
 
     def forward(self, x):
-        print(x)
         return self.gem(x, p=self.p, eps=self.eps)
         
     def gem(self, x, p=3, eps=1e-6):

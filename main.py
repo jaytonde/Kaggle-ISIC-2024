@@ -65,6 +65,7 @@ class GeM(nn.Module):
         self.eps = eps
 
     def forward(self, x):
+        print(x)
         return self.gem(x, p=self.p, eps=self.eps)
         
     def gem(self, x, p=3, eps=1e-6):
@@ -106,6 +107,7 @@ class ISICModel(L.LightningModule):
         print(f"In forward")
         logits          = self.model(x)
         print(f"Model output type : {type(logits)}")
+        print(f"Model output shape : {logits.shape}")
         pooled_features = self.pooling(logits).flatten(1)
         print(f"polling layer output type : {type(pooled_features)}")
         output          = self.linear(pooled_features)

@@ -100,7 +100,7 @@ class ISICModel(L.LightningModule):
             self.in_features       = self.model.classifier.in_features
             self.model.classifier  = nn.Identity()
             self.model.global_pool = nn.Identity()
-            self.linear            = nn.Linear(, 1)
+            self.linear            = nn.Linear(self.in_features, 1)
         elif "resnet" in config.model_id:
             self.linear    = nn.Linear(self.model.fc.in_features, 1)
 

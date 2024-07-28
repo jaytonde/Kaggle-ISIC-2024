@@ -108,15 +108,15 @@ class ISICModel(L.LightningModule):
     def forward(self, x):
         print(f"In forward")
         logits          = self.model(x)
-        print(f"Model output type : {type(logits)}")
-        print(f"Model output shape : {logits.shape}")
+        # print(f"Model output type : {type(logits)}")
+        # print(f"Model output shape : {logits.shape}")
         pooled_features = self.pooling(logits).flatten(1)
-        print(f"pulling layer output type : {type(pooled_features)}")
-        print(f"pulling layer output shape : {pooled_features.shape}")
+        # print(f"pulling layer output type : {type(pooled_features)}")
+        # print(f"pulling layer output shape : {pooled_features.shape}")
         output          = self.linear(pooled_features)
-        print(f"linear layer output type : {type(output)}")
-        print(f"pulling layer output shape : {output.shape}")
-        print('*'*20)
+        # print(f"linear layer output type : {type(output)}")
+        # print(f"pulling layer output shape : {output.shape}")
+        # print('*'*20)
         return output
     
     def training_step(self, batch, batch_idx):

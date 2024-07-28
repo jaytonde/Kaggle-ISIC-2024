@@ -106,7 +106,7 @@ class ISICModel(L.LightningModule):
         self.save_hyperparameters()
    
     def forward(self, x):
-        print(f"In forward")
+        #print(f"In forward")
         logits          = self.model(x)
         # print(f"Model output type : {type(logits)}")
         # print(f"Model output shape : {logits.shape}")

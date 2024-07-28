@@ -97,9 +97,10 @@ class ISICModel(L.LightningModule):
         if "convnext" in config.model_id:
             self.linear    = nn.Linear(self.model.head.fc.in_features, 1)
         elif "efficientnet" in config.model_id:
+            self.in_features       = self.model.classifier.in_features
             self.model.classifier  = nn.Identity()
             self.model.global_pool = nn.Identity()
-            self.linear            = nn.Linear(self.model.classifier.in_features, 1)
+            self.linear            = nn.Linear(, 1)
         elif "resnet" in config.model_id:
             self.linear    = nn.Linear(self.model.fc.in_features, 1)
 

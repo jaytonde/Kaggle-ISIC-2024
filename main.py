@@ -57,6 +57,23 @@ class ISICDataset:
         
         return {'image':tensor_image['image'], 'label':tensor_target}
 
+class GeM(nn.Module):
+    def __init__(self, p=3, eps=1e-6):
+        super(GeM, self).__init__()
+        self.p   = nn.Parameter(torch.ones(1)*p)
+        self.eps = eps
+
+    def forward(self, x):
+        return self.gem(x, p=self.p, eps=self.eps)
+        
+    def gem(self, x, p=3, eps=1e-6):
+        return F.avg_pool2d(x.clamp(min=eps).pow(p), (x.size(-2), x.size(-1))).pow(1./p)
+        
+    def __repr__(self):
+        return self.__class__.__name__ + \
+                '(' + 'p=' + '{:.4f}'.format(self.p.data.tolist()[0]) + \
+                ', ' + 'eps=' + str(self.eps) + ')'
+
 class ISICModel(L.LightningModule):
 
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
@@ -72,19 +89,28 @@ class ISICModel(L.LightningModule):
         self.auc_roc                       = BinaryAUROC()
         self.f1_score                      = BinaryF1Score()
         
-        self.model                = timm.create_model(config.model_id, pretrained=pretrained)
+        self.model                         = timm.create_model(config.model_id, pretrained=pretrained)
+        self.pooling                       = GeM()
+
         if "convnext" in config.model_id:
-            self.model.head.fc    = nn.Linear(self.model.head.fc.in_features, 1)
+            self.linear    = nn.Linear(self.model.head.fc.in_features, 1)
         elif "efficientnet" in config.model_id:
-            self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
+            self.linear    = nn.Linear(self.model.classifier.in_features, 1)
         elif "resnet" in config.model_id:
-            self.model.fc         = nn.Linear(self.model.fc.in_features, 1)
+            self.linear    = nn.Linear(self.model.fc.in_features, 1)
 
         self.save_hyperparameters()
    
     def forward(self, x):
-        x = self.model(x)
-        return x
+        print(f"In forward")
+        logits          = self.model(x)
+        print(f"Model output type : {type(logits)}")
+        pooled_features = self.pooling(logits).flatten(1)
+        print(f"polling layer output type : {type(pooled_features)}")
+        output          = self.linear(pooled_features)
+        print(f"linear layer output type : {type(output)}")
+        print('*'*20)
+        return output
     
     def training_step(self, batch, batch_idx):
         x      = batch['image']

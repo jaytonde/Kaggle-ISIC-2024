@@ -9,7 +9,7 @@ n_folds              : 5
 batch_size           : 64
 num_classes          : 2
 num_workers          : 4
-max_epochs           : 50
+max_epochs           : 10
 learning_rate        : 1e-5
 fold                 : 0
 seed                 : 2024

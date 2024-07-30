@@ -338,6 +338,10 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
 def main(config):
 
     start_time = datetime.now()
+    print("----------------------------------------------")
+    print(os.getenv("KAGGLE_USERNAME"))
+    print(os.getenv("WANDB_API_KEY"))    
+    print("----------------------------------------------")
 
     print(f"Experiment name : {config.experiment_name} having model : {config.model_id} is started..")
     if config.debug:

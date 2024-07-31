@@ -102,21 +102,15 @@ class ISICModel(L.LightningModule):
             self.linear            = nn.Linear(self.in_features, 1)
         elif "resnet" in config.model_id:
             self.linear    = nn.Linear(self.model.fc.in_features, 1)
+        if "mobilenet" in config.model_id:
+            self.linear    = nn.Linear(self.model.classifier.in_features, 1)
 
         self.save_hyperparameters()
    
     def forward(self, x):
-        #print(f"In forward")
-        logits          = self.model(x)
-        # print(f"Model output type : {type(logits)}")
-        # print(f"Model output shape : {logits.shape}")
-        pooled_features = self.pooling(logits).flatten(1)
-        # print(f"pulling layer output type : {type(pooled_features)}")
-        # print(f"pulling layer output shape : {pooled_features.shape}")
-        output          = self.linear(pooled_features)
-        # print(f"linear layer output type : {type(output)}")
-        # print(f"pulling layer output shape : {output.shape}")
-        # print('*'*20)
+        output          = self.model(x)
+        # pooled_features = self.pooling(logits).flatten(1)
+        # output          = self.linear(pooled_features)
         return output
     
     def training_step(self, batch, batch_idx):

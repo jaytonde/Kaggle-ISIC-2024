@@ -108,7 +108,7 @@ class ISICModel(L.LightningModule):
         self.save_hyperparameters()
    
     def forward(self, x):
-        output          = self.model(x)
+        logits          = self.model(x)
         pooled_features = self.pooling(logits).flatten(1)
         output          = self.linear(pooled_features)
         return output

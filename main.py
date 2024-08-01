@@ -40,17 +40,27 @@ warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
 
 class ISICDataset:
-    def __init__(self, image_file, df, transform=None):
-        self.df             = df
-        self.transform      = transform
-        self.image_file     = h5py.File(image_file, 'r')
+    def __init__(self, config, df, transform=None):
+        self.df                  = df
+        self.transform           = transform
+        self.image_file_2024     = h5py.File(config.image_file_2024, 'r')
+        self.image_file_2020     = h5py.File(config.image_file_2020, 'r')
+        self.image_file_2019     = h5py.File(config.image_file_2019, 'r')
         
     def __len__(self):
         return len(self.df)
     
     def __getitem__(self, idx):
         image_id      = self.df.iloc[idx]['isic_id']
-        image_data    = self.image_file[image_id][()]
+        year          = self.df.iloc[idx]['year']
+
+        if year == 2024:
+            image_data    = self.image_file_2024[image_id][()]
+        elif year == 2020:
+            image_data    = self.image_file_2020[image_id][()]
+        else:
+            image_data    = self.image_file_2019[image_id][()]   
+
         pil_image     = Image.open(io.BytesIO(image_data))
         pil_image     = np.array(pil_image)
         tensor_image  = self.transform(image=pil_image)
@@ -197,9 +207,9 @@ class ISICModel(L.LightningModule):
     
 class ISICDataModule(L.LightningDataModule):
 
-    def __init__(self, hdf5_file_path, train_df, val_df, train_transform=None, test_transform=None, batch_size=32, num_workers=4):
+    def __init__(self, config, train_df, val_df, train_transform=None, test_transform=None, batch_size=32, num_workers=4):
         super().__init__()
-        self.hdf5_file_path   = hdf5_file_path
+        self.config           = config
         self.train_df         = train_df
         self.val_df           = val_df
         self.train_transform  = train_transform
@@ -209,10 +219,10 @@ class ISICDataModule(L.LightningDataModule):
 
     def setup(self, stage=None):
         if stage == "fit":
-            self.train_dataset = ISICDataset(self.hdf5_file_path, self.train_df, self.train_transform)
-            self.val_dataset   = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
+            self.train_dataset = ISICDataset(self.config, self.train_df, self.train_transform)
+            self.val_dataset   = ISICDataset(self.config, self.val_df, self.test_transform)
         elif stage == "predict":
-            self.predict_dataset  = ISICDataset(self.hdf5_file_path, self.val_df, self.test_transform)
+            self.predict_dataset  = ISICDataset(self.config, self.val_df, self.test_transform)
         
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
@@ -382,7 +392,7 @@ def main(config):
 
     # Initialize DataModule
     data_module = ISICDataModule(
-        hdf5_file_path  = config.image_path,
+        config          = config,
         train_df        = train_df,
         val_df          = eval_df,
         train_transform = get_transform("train", config.image_size),

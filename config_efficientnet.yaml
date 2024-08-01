@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-9"
+experiment_name      : "ISIC-EXP-10"
 
 #Model parameter's
 model_id             : 'efficientnet_b0'
@@ -19,15 +19,18 @@ image_size           : 312
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "balanced dataset, 50 epochs, GeM pooling"
+notes                : "balanced dataset, 50 epochs, GeM pooling, added 2020, 2019 maliganant images"
 
 #Files and paths
 data_dir             : "./input"
 artifacts_dir        : "./output"
 output_dir           : "${artifacts_dir}/${experiment_name}"
-training_filename    : "ISIC_train_data_balanced.csv"
+training_filename    : "ISIC_train_data_2024_2020_2019_balanced.csv"
 image_path           : '${data_dir}/train-image.hdf5'
 train_code_file      : "main.py"
 config_file          : "config_efficientnet.yaml"
+image_file_2024      : '${data_dir}/train-image.hdf5'
+image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'
+image_file_2019      : '${data_dir}/images_maliganant_2019.hdf5'
 
 

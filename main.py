@@ -109,8 +109,8 @@ class ISICModel(L.LightningModule):
    
     def forward(self, x):
         output          = self.model(x)
-        # pooled_features = self.pooling(logits).flatten(1)
-        #output          = self.linear(pooled_features)
+        pooled_features = self.pooling(logits).flatten(1)
+        output          = self.linear(pooled_features)
         return output
     
     def training_step(self, batch, batch_idx):

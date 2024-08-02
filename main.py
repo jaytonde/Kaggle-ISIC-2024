@@ -58,14 +58,10 @@ class ISICDataset:
             image_data    = self.image_file_2024[image_id][()]
             pil_image     = Image.open(io.BytesIO(image_data))
             pil_image     = np.array(pil_image)
-            print(f"2024 : {type(pil_image)}")
         elif year == 2020:
             pil_image    = self.image_file_2020[image_id][()]
-            print(f"2020 : {type(pil_image)}")
         else:
-            pil_image    = self.image_file_2019[image_id][()]
-            print(f"2019 : {type(pil_image)}")   
-        
+            pil_image    = self.image_file_2019[image_id][()]   
         
         tensor_image  = self.transform(image=pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)

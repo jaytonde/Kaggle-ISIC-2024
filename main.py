@@ -56,15 +56,18 @@ class ISICDataset:
 
         if year == 2024:
             image_data    = self.image_file_2024[image_id][()]
+            print(f"2024 : {type(image_data)}")
         elif year == 2020:
             image_data    = self.image_file_2020[image_id][()]
+            print(f"2020 : {type(image_data)}")
         else:
-            image_data    = self.image_file_2019[image_id][()]   
-
+            image_data    = self.image_file_2019[image_id][()]
+            print(f"2019 : {type(image_data)}")   
+        
         pil_image     = Image.open(io.BytesIO(image_data))
         pil_image     = np.array(pil_image)
         tensor_image  = self.transform(image=pil_image)
-        tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
+        tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)\
         
         return {'image':tensor_image['image'], 'label':tensor_target}
 
@@ -425,6 +428,7 @@ def main(config):
         callbacks   = [checkpoint_callback],
         accelerator = "gpu",
         precision   = "16-mixed",
+        num_sanity_val_steps = 0,
     )
 
     # Train the model

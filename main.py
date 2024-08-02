@@ -69,7 +69,7 @@ class ISICDataset:
         pil_image     = Image.open(io.BytesIO(image_data))
         pil_image     = np.array(pil_image)
         tensor_image  = self.transform(image=pil_image)
-        tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)\
+        tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
 
         return {'image':tensor_image['image'], 'label':tensor_target}
 

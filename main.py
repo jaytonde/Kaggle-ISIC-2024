@@ -68,7 +68,7 @@ class ISICDataset:
         pil_image     = np.array(pil_image)
         tensor_image  = self.transform(image=pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)\
-        
+
         return {'image':tensor_image['image'], 'label':tensor_target}
 
 class GeM(nn.Module):
@@ -380,6 +380,7 @@ def main(config):
     dataset_df            = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
     if config.debug:
+        config.max_epochs = 1
         train_df          = dataset_df[0:1000]
         eval_df           = dataset_df[1001:2050]
     else:    

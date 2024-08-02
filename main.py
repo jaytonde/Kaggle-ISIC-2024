@@ -59,9 +59,11 @@ class ISICDataset:
             print(f"2024 : {type(image_data)}")
         elif year == 2020:
             image_data    = self.image_file_2020[image_id][()]
+            image_data    = image_data.tobytes()
             print(f"2020 : {type(image_data)}")
         else:
             image_data    = self.image_file_2019[image_id][()]
+            image_data    = image_data.tobytes()
             print(f"2019 : {type(image_data)}")   
         
         pil_image     = Image.open(io.BytesIO(image_data))

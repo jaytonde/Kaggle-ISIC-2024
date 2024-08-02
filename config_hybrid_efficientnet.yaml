@@ -1,0 +1,36 @@
+#Naming
+experiment_name      : "ISIC-EXP-12"
+
+#Model parameter's
+model_id             : 'efficientnet_b0'
+full_fit             : False
+debug                : False
+n_folds              : 5
+batch_size           : 8
+num_classes          : 2
+num_workers          : 4
+max_epochs           : 50
+learning_rate        : 1e-5
+fold                 : 0
+seed                 : 2024
+tpr_threshold        : 0.8
+image_size           : 312
+
+#Logging
+wandb_log            : True
+wandb_project_name   : "ISIC"
+notes                : "balanced dataset, 50 epochs, GeM pooling, added 2020, 2019 maliganant images"
+
+#Files and paths
+data_dir             : "./input"
+artifacts_dir        : "./output"
+output_dir           : "${artifacts_dir}/${experiment_name}"
+training_filename    : "ISIC_train_data.csv"
+image_path           : '${data_dir}/train-image.hdf5'
+train_code_file      : "main_hybrid.py"
+config_file          : "config_hybrid_efficientnet.yaml"
+image_file_2024      : '${data_dir}/train-image.hdf5'
+image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'
+image_file_2019      : '${data_dir}/images_maliganant_2019.hdf5'
+
+

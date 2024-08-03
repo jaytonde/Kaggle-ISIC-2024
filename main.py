@@ -104,7 +104,7 @@ class ISICModel(L.LightningModule):
         self.pooling                       = GeM()
 
         if "convnext" in config.model_id:
-            self.linear    = nn.Linear(self.model.head.fc.in_features, 1)
+            self.linear    = nn.Linear(320, 1)
         elif "efficientnet" in config.model_id:
             self.in_features       = self.model.classifier.in_features
             self.model.classifier  = nn.Identity()
@@ -121,6 +121,10 @@ class ISICModel(L.LightningModule):
         logits          = self.model(x)
         pooled_features = self.pooling(logits).flatten(1)
         output          = self.linear(pooled_features)
+
+        #convnext 
+        # logits          = self.model(x)
+        # output          = self.linear(logits)
         return output
     
     def training_step(self, batch, batch_idx):

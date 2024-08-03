@@ -391,6 +391,15 @@ def main(config):
 
     dataset_df            = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
+    #Upsampling
+    print(f"Shape of the dataset df before up sampling 7 times")
+    df_2024_mal    = dataset_df[(dataset_df['year']==2024) & (dataset_df['target']==1)]
+    dataset_df     = pd.concat([df_2024_mal] * 7, ignore_index=True)
+    print(f"Shape of the dataset df after up sampling 7 times")
+
+    # Step 2: Concatenate df1 and the duplicated df2
+    result = pd.concat([df1, df2_duplicated], ignore_index=True)
+
     if config.debug:
         config.max_epochs = 1
         train_df          = dataset_df[0:1000]

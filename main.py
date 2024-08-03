@@ -323,8 +323,19 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
     eval_df['preds'] = preds
 
     print("Logging images to wandb.")
-    image_file       = h5py.File(config.image_path, 'r')
-    eval_df['image'] = eval_df.apply(lambda row: load_image(row, image_file), axis=1) 
+    image_file_2024 = h5py.File(config.image_file_2024, 'r')
+    image_file_2020 = h5py.File(config.image_file_2020, 'r')
+    image_file_2019 = h5py.File(config.image_file_2019, 'r')
+
+    for id, row in eval_df.iterrows():
+        if row['year'] == 2024:
+            eval_df.at[id,'image'] = load_image(row, image_file_2024)
+        elif row['year'] == 2020:
+            image_id               = row['isic_id']
+            eval_df.at[id,'image'] = wandb.Image(image_file_2020[image_id][()])
+        else:
+            image_id               = row['isic_id']
+            eval_df.at[id,'image'] = wandb.Image(image_file_2019[image_id][()])  
 
     columns = ['isic_id','image','target','preds']
     data    = eval_df[['isic_id','image','target','preds']].values.tolist()

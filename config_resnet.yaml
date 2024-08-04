@@ -32,7 +32,7 @@ output_dir           : "${artifacts_dir}/${experiment_name}"
 training_filename    : "ISIC_train_data_balanced.csv"
 image_path           : '${data_dir}/train-image.hdf5'
 train_code_file      : "main.py"
-config_file          : "config.yaml"
+config_file          : "config_resnet.yaml"
 image_file_2024      : '${data_dir}/train-image.hdf5'
 image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'
 image_file_2019      : '${data_dir}/images_maliganant_2019.hdf5'

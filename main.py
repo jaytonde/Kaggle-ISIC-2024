@@ -152,12 +152,12 @@ class ISICModel(L.LightningModule):
         pool            = F.adaptive_avg_pool2d(logits,1).reshape(config.batch_size,-1)
 
         if self.training:
-			new_logit = 0
-			for i in range(len(self.dropout)):
-				new_logit += self.linear(self.dropout[i](pool))
-			new_logit = new_logit/len(self.dropout)
-		else:
-			new_logit = self.linear(pool)
+            new_logit = 0
+            for i in range(len(self.dropout)):
+                new_logit += self.linear(self.dropout[i](pool))
+            new_logit = new_logit/len(self.dropout)
+        else:
+            new_logit = self.linear(pool)
 
         return new_logit
     

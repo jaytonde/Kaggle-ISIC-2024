@@ -42,6 +42,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 class ISICDataset:
     def __init__(self, config, df, transform=None):
         self.df                  = df
+        self.config              = config
         self.transform           = transform
         self.image_file_2024     = h5py.File(config.image_file_2024, 'r')
         self.image_file_2020     = h5py.File(config.image_file_2020, 'r')
@@ -52,17 +53,22 @@ class ISICDataset:
     
     def __getitem__(self, idx):
         image_id      = self.df.iloc[idx]['isic_id']
-        year          = self.df.iloc[idx]['year']
 
-        if year == 2024:
+        if config.use_old_data:
+            year          = self.df.iloc[idx]['year']
+            if year == 2024:
+                image_data    = self.image_file_2024[image_id][()]
+                pil_image     = Image.open(io.BytesIO(image_data))
+                pil_image     = np.array(pil_image)
+            elif year == 2020:
+                pil_image    = self.image_file_2020[image_id][()]
+            else:
+                pil_image    = self.image_file_2019[image_id][()]  
+        else:
             image_data    = self.image_file_2024[image_id][()]
             pil_image     = Image.open(io.BytesIO(image_data))
             pil_image     = np.array(pil_image)
-        elif year == 2020:
-            pil_image    = self.image_file_2020[image_id][()]
-        else:
-            pil_image    = self.image_file_2019[image_id][()]   
-        
+    
         tensor_image  = self.transform(image=pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
         tensor_image  = torch.cat([tensor_image['image'], self.F_rgb2hsv(tensor_image['image'])],1)

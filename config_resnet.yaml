@@ -16,6 +16,7 @@ seed                 : 2024
 tpr_threshold        : 0.8
 image_size           : 384
 dropout              : 0.5
+use_old_data         : False
 
 #Logging
 wandb_log            : True

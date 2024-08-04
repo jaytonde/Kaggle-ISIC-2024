@@ -17,6 +17,8 @@ tpr_threshold        : 0.8
 image_size           : 384
 dropout              : 0.5
 use_old_data         : False
+global_pool          : ''
+in_chans             : 6
 
 #Logging
 wandb_log            : True

@@ -65,8 +65,25 @@ class ISICDataset:
         
         tensor_image  = self.transform(image=pil_image)
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
+        tensor_image  = torch.cat([tensor_image['image'], self.F_rgb2hsv(tensor_image['image'])],1)
 
-        return {'image':tensor_image['image'], 'label':tensor_target}
+        return {'image':tensor_image, 'label':tensor_target}
+
+    def F_rgb2hsv(self, rgb: torch.Tensor) -> torch.Tensor:
+        cmax, cmax_idx       = torch.max(rgb, dim=1, keepdim=True)
+        cmin                 = torch.min(rgb, dim=1, keepdim=True)[0]
+        delta                = cmax - cmin
+        hsv_h                = torch.empty_like(rgb[:, 0:1, :, :])
+        cmax_idx[delta == 0] = 3
+        hsv_h[cmax_idx == 0] = (((rgb[:, 1:2] - rgb[:, 2:3]) / delta) % 6)[cmax_idx == 0]
+        hsv_h[cmax_idx == 1] = (((rgb[:, 2:3] - rgb[:, 0:1]) / delta) + 2)[cmax_idx == 1]
+        hsv_h[cmax_idx == 2] = (((rgb[:, 0:1] - rgb[:, 1:2]) / delta) + 4)[cmax_idx == 2]
+        hsv_h[cmax_idx == 3] = 0.
+        hsv_h               /= 6.
+        hsv_s                = torch.where(cmax == 0, torch.tensor(0.).type_as(rgb), delta / cmax)
+        hsv_v                = cmax
+        return torch.cat([hsv_h, hsv_s, hsv_v], dim=1)
+
 
 class GeM(nn.Module):
     def __init__(self, p=3, eps=1e-6):
@@ -112,6 +129,10 @@ class ISICModel(L.LightningModule):
             self.linear            = nn.Linear(self.in_features, 1)
         elif "resnet" in config.model_id:
             self.linear    = nn.Linear(self.model.fc.in_features, 1)
+            self.dropout   = nn.ModuleList([
+                                                nn.Dropout(0.5) for i in range(5)
+                                          ])
+
         if "mobilenet" in config.model_id:
             self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
 
@@ -123,9 +144,22 @@ class ISICModel(L.LightningModule):
         # output          = self.linear(pooled_features)
 
         #convnext 
+        # logits          = self.model(x)
+        # output          = self.linear(logits)
+
+        #resnet
         logits          = self.model(x)
-        output          = self.linear(logits)
-        return output
+        pool            = F.adaptive_avg_pool2d(logits,1).reshape(config.batch_size,-1)
+
+        if self.training:
+			new_logit = 0
+			for i in range(len(self.dropout)):
+				new_logit += self.linear(self.dropout[i](pool))
+			new_logit = new_logit/len(self.dropout)
+		else:
+			new_logit = self.linear(pool)
+
+        return new_logit
     
     def training_step(self, batch, batch_idx):
         x      = batch['image']

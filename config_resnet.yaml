@@ -1,15 +1,15 @@
 #Naming
-experiment_name      : "ISIC-EXP-6"
+experiment_name      : "ISIC-EXP-14"
 
 #Model parameter's
 model_id             : 'resnet18'
 full_fit             : False
 debug                : False
 n_folds              : 5
-batch_size           : 32
+batch_size           : 8
 num_classes          : 2
 num_workers          : 4
-max_epochs           : 50
+max_epochs           : 10
 learning_rate        : 1e-5
 fold                 : 0
 seed                 : 2024
@@ -20,7 +20,7 @@ dropout              : 0.5
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "First experiment of the resnet model"
+notes                : "Resnet18, added hsv channel, added dropouts"
 
 #Files and paths
 data_dir             : "./input"

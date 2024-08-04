@@ -154,10 +154,10 @@ class TAB_DATA_Preprocessing():
         
         return df, new_num_cols
 
-    def feature_main(self):
+    def feature_main(self, train, test):
         
-        train, _= feature_engineering(train.copy())
-        test,  _= feature_engineering(test.copy())
+        train, _= self.feature_engineering(train.copy())
+        test,  _= self.feature_engineering(test.copy())
 
         train.replace([np.inf, -np.inf], np.nan, inplace=True)
         test.replace( [np.inf, -np.inf], np.nan, inplace=True)
@@ -177,31 +177,29 @@ class TAB_DATA_Preprocessing():
         test[self.config.numerical_columns]  = scaler.transform(test[self.config.numerical_columns])
 
 
-        simple_imputer = SimpleImputer(strategy='most_frequent')
+        simple_imputer                                  = SimpleImputer(strategy='most_frequent')
         train[cat_features+[self.config.binary_column]] = simple_imputer.fit_transform(train[self.config.cat_features+[self.config.binary_column]])
-        test[cat_features+[self.config.binary_column]] = simple_imputer.transform(test[self.config.cat_features+[self.config.binary_column]])
+        test[cat_features+[self.config.binary_column]]  = simple_imputer.transform(test[self.config.cat_features+[self.config.binary_column]])
 
         train[self.config.binary_column] = train[self.config.binary_column].map({'male': 0, 'female': 1})
-        test[self.config.binary_column] = test[self.config.binary_column].map({'male': 0, 'female': 1})
+        test[self.config.binary_column]  = test[self.config.binary_column].map({'male': 0, 'female': 1})
 
-        onehot_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        onehot_encoder   = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
         train_encoded_df = pd.DataFrame(onehot_encoder.fit_transform(train[self.config.cat_features]))
-        test_encoded_df = pd.DataFrame(onehot_encoder.transform(test[self.config.cat_features]))
+        test_encoded_df  = pd.DataFrame(onehot_encoder.transform(test[self.config.cat_features]))
 
         train_encoded_df.columns = onehot_encoder.get_feature_names_out(self.config.cat_features)
-        test_encoded_df.columns = onehot_encoder.get_feature_names_out(self.config.cat_features)
+        test_encoded_df.columns  = onehot_encoder.get_feature_names_out(self.config.cat_features)
 
         test = test.drop(columns=self.config.cat_features).reset_index(drop=True)
         test = pd.concat([test, test_encoded_df], axis=1)
 
-        self.config.cat_features = list(onehot_encoder.get_feature_names_out(self.config.cat_features))
+        self.config.cat_features  = list(onehot_encoder.get_feature_names_out(self.config.cat_features))
         self.config.cat_features += ["sex"]
 
         meta_features = self.config.numerical_columns + self.config.cat_features
 
-        return meta_features
-
-
+        return train, test, meta_features
 
 class ISIC_HYBRIDDataset:
     def __init__(self, config, df, meta_features, transform=None):
@@ -374,8 +372,7 @@ class ISICDataModule(L.LightningDataModule):
             pre_process = TAB_DATA_Preprocessing()
 
             print(f"Calculating the meta features : {self.train_df.shape}")
-            self.train_df, train_meta_features = pre_process.feature_engineering(self.train_df)
-            self.val_df,   val_meta_features   = pre_process.feature_engineering(self.val_df)
+            self.train_df, self.val_df, train_meta_features = pre_process.feature_main(self.train_df, self.val_df)
             print(f"Calculation of the meta features completed : {self.train_df.shape}")
 
             self.train_dataset = ISICDataset(self.config, self.train_df, train_meta_features, self.train_transform)
@@ -542,10 +539,6 @@ def main(config):
         else:
             train_df          = dataset_df[(dataset_df["fold"] != config.fold) & (dataset_df["fold"] != -1)]
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
-
-    
-    pre_process = TAB_DATA_Preprocessing()
-    tra
 
     print(f"Shape of the train df : {train_df.shape}")
     print(f"Shape of the test df : {eval_df.shape}")

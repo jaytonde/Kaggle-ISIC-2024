@@ -34,3 +34,18 @@ image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'
 image_file_2019      : '${data_dir}/images_maliganant_2019.hdf5'
 
 
+#Features 
+binary_column        : "sex"
+cat_features         : [    
+                            "anatom_site_general","tbp_lv_location_simple","tbp_lv_location"
+                       ]
+numerical_columns    : [    'age_approx','clin_size_long_diam_mm','tbp_lv_A','tbp_lv_Aext','tbp_lv_B','tbp_lv_Bext','tbp_lv_C','tbp_lv_Cext','tbp_lv_H','tbp_lv_Hext',
+                            'tbp_lv_L','tbp_lv_Lext','tbp_lv_areaMM2','tbp_lv_area_perim_ratio','tbp_lv_color_std_mean','tbp_lv_deltaA','tbp_lv_deltaB','tbp_lv_deltaL','tbp_lv_deltaLBnorm','tbp_lv_eccentricity','tbp_lv_minorAxisMM','tbp_lv_nevi_confidence','tbp_lv_norm_border','tbp_lv_norm_color',
+                            'tbp_lv_perimeterMM','tbp_lv_radial_color_std_max','tbp_lv_stdL','tbp_lv_stdLExt','tbp_lv_symm_2axis','tbp_lv_symm_2axis_angle','tbp_lv_x','tbp_lv_y','tbp_lv_z','lesion_size_ratio','lesion_shape_index','hue_contrast','lesion_color_difference','color_uniformity',
+                            'perimeter_to_area_ratio','lesion_visibility_score','symmetry_border_consistency','color_consistency','size_age_interaction','lesion_severity_index','color_contrast_index','log_lesion_area','normalized_lesion_size','mean_hue_difference','3d_lesion_orientation','overall_color_difference',
+                            'symmetry_perimeter_interaction','comprehensive_lesion_index','shape_complexity_ratio','color_variability','border_asymmetry','3d_size_ratio','age_lesion_interaction','color_contrast_complexity','shape_color_composite','relative_lesion_size',
+                            'border_color_interaction','3d_polar_angle','shape_size_ratio','visibility_size_interaction','age_adjusted_lesion_index','nonlinear_color_contrast','shape_location_index','border_complexity_asymmetry_ratio',
+                            'color_variability_size_interaction','3d_lesion_composite','nonlinear_shape_color_composite'
+                       ]
+
+                    

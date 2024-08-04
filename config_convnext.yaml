@@ -19,7 +19,7 @@ image_size           : 312
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "balanced dataset, 10 epochs, upsampled 2024 maliganant 7 times, added 2020, 2019 maliganant images"
+notes                : "balanced dataset, 10 epochs, upsampled 2024 maliganant 10 times, added 2020, 2019 maliganant images"
 
 #Files and paths
 data_dir             : "./input"

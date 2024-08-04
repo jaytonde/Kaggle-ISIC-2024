@@ -39,6 +39,9 @@ warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
 class TAB_DATA_Preprocessing():
 
+    def __init__(self, config):
+        self.config = config
+
     def feature_engineering(self, df):
 
         df["lesion_size_ratio"]              = df["tbp_lv_minorAxisMM"] / df["clin_size_long_diam_mm"]
@@ -51,11 +54,8 @@ class TAB_DATA_Preprocessing():
         df["3d_position_distance"]           = np.sqrt(df["tbp_lv_x"] ** 2 + df["tbp_lv_y"] ** 2 + df["tbp_lv_z"] ** 2) 
         df["perimeter_to_area_ratio"]        = df["tbp_lv_perimeterMM"] / df["tbp_lv_areaMM2"]
         df["lesion_visibility_score"]        = df["tbp_lv_deltaLBnorm"] + df["tbp_lv_norm_color"]
-
-        
         df["symmetry_border_consistency"]    = df["tbp_lv_symm_2axis"] * df["tbp_lv_norm_border"]
         df["color_consistency"]              = df["tbp_lv_stdL"] / df["tbp_lv_Lext"]
-        
         df["size_age_interaction"]           = df["clin_size_long_diam_mm"] * df["age_approx"]
         df["hue_color_std_interaction"]      = df["tbp_lv_H"] * df["tbp_lv_color_std_mean"]
         df["lesion_severity_index"]          = (df["tbp_lv_norm_border"] + df["tbp_lv_norm_color"] + df["tbp_lv_eccentricity"]) / 3
@@ -92,10 +92,10 @@ class TAB_DATA_Preprocessing():
         # 7. Composite index of shape and color
         df['shape_color_composite'] = df['shape_complexity_index'] * df['color_uniformity']
         
-        # 8. 病変の相対的な大きさ
+        # 8. Relative size of lesions
         df['relative_lesion_size'] = df['clin_size_long_diam_mm'] / df['tbp_lv_minorAxisMM']
         
-        # 9. 境界の複雑さと色彩の変動性の相互作用
+        # 9. Interaction of boundary complexity and color variability
         df['border_color_interaction'] = df['border_complexity'] * df['color_variability']
         
         # 10. Polar coordinate representation of 3D position
@@ -103,34 +103,34 @@ class TAB_DATA_Preprocessing():
         df['3d_polar_angle'] = np.arccos(df['tbp_lv_z'] / df['3d_radial_distance'])
         df['3d_azimuthal_angle'] = np.arctan2(df['tbp_lv_y'], df['tbp_lv_x'])
         
-        # 11. 病変の形状の複雑さと大きさの比
+        # 11. Lesion shape complexity and size ratio
         df['shape_size_ratio'] = df['shape_complexity_index'] / df['clin_size_long_diam_mm']
         
-        # 12. 色彩の非一様性と境界の複雑さの複合指標
+        # 12. A composite index of color nonuniformity and boundary complexity
         df['color_border_complexity'] = df['color_uniformity'] * df['border_complexity']
         
-        # 13. 病変の可視性と大きさの相互作用
+        # 13. Interaction of lesion visibility and size
         df['visibility_size_interaction'] = df['lesion_visibility_score'] * np.log(df['clin_size_long_diam_mm'])
         
-        # 14. 年齢調整済みの病変の特徴
+        # 14. Age-adjusted lesion characteristics
         df['age_adjusted_lesion_index'] = df['comprehensive_lesion_index'] / np.log(df['age_approx'])
         
-        # 15. 色彩コントラストの非線形変換
+        # 15. Nonlinear transformation of color contrast
         df['nonlinear_color_contrast'] = np.tanh(df['color_contrast_index'])
         
-        # 16. 病変の形状と位置の複合指標
+        # 16. Composite index of lesion shape and location
         df['shape_location_index'] = df['lesion_shape_index'] * df['3d_position_distance']
         
-        # 17. 境界の複雑さと非対称性の比率
+        # 17. Boundary complexity and asymmetry ratio
         df['border_complexity_asymmetry_ratio'] = df['border_complexity'] / (df['tbp_lv_symm_2axis'] + 1e-5)
         
-        # 18. 色彩の変動性と病変の大きさの相互作用
+        # 18. Interaction of color variability and lesion size
         df['color_variability_size_interaction'] = df['color_variability'] * np.log(df['tbp_lv_areaMM2'])
         
-        # 19. 3D位置と病変の特徴の複合指標
+        # 19. Composite index of 3D location and lesion characteristics
         df['3d_lesion_composite'] = df['3d_position_distance'] * df['comprehensive_lesion_index']
 
-        # 20. 病変の形状と色彩の非線形複合指標
+        # 20. Nonlinear composite index of lesion shape and color
         df['nonlinear_shape_color_composite'] = np.tanh(df['shape_color_composite'])
         
         new_num_cols = [
@@ -151,68 +151,82 @@ class TAB_DATA_Preprocessing():
             "nonlinear_color_contrast", "shape_location_index", "border_complexity_asymmetry_ratio", "color_variability_size_interaction",
             "3d_lesion_composite", "nonlinear_shape_color_composite",
         ]
-    #     new_cat_cols = ["combined_anatomical_site"]
+        
         return df, new_num_cols
+
+    def feature_main(self):
+        
+        train, _= feature_engineering(train.copy())
+        test,  _= feature_engineering(test.copy())
+
+        train.replace([np.inf, -np.inf], np.nan, inplace=True)
+        test.replace( [np.inf, -np.inf], np.nan, inplace=True)
+
+        train[self.config.numerical_columns] = train[self.config.numerical_columns].fillna(train[self.config.numerical_columns].median())
+        test[self.config.numerical_columns]  = test[self.config.numerical_columns].fillna(test[self.config.numerical_columns].median())
+
+        train['n_images']  = train.patient_id.map(train.groupby(['patient_id']).isic_id.count())
+        test['n_images']   = test.patient_id.map(test.groupby(['patient_id']).isic_id.count())
+        train.loc[train['patient_id'] == -1, 'n_images'] = 1
+        train['n_images']  = np.log1p(train['n_images'].values)
+        test['n_images']   = np.log1p(test['n_images'].values)
+        self.config.numerical_columns += ["n_images"]
+
+        scaler                               = MinMaxScaler()
+        train[self.config.numerical_columns] = scaler.fit_transform(train[self.config.numerical_columns])
+        test[self.config.numerical_columns]  = scaler.transform(test[self.config.numerical_columns])
+
+
+        simple_imputer = SimpleImputer(strategy='most_frequent')
+        train[cat_features+[self.config.binary_column]] = simple_imputer.fit_transform(train[self.config.cat_features+[self.config.binary_column]])
+        test[cat_features+[self.config.binary_column]] = simple_imputer.transform(test[self.config.cat_features+[self.config.binary_column]])
+
+        train[self.config.binary_column] = train[self.config.binary_column].map({'male': 0, 'female': 1})
+        test[self.config.binary_column] = test[self.config.binary_column].map({'male': 0, 'female': 1})
+
+        onehot_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        train_encoded_df = pd.DataFrame(onehot_encoder.fit_transform(train[self.config.cat_features]))
+        test_encoded_df = pd.DataFrame(onehot_encoder.transform(test[self.config.cat_features]))
+
+        train_encoded_df.columns = onehot_encoder.get_feature_names_out(self.config.cat_features)
+        test_encoded_df.columns = onehot_encoder.get_feature_names_out(self.config.cat_features)
+
+        test = test.drop(columns=self.config.cat_features).reset_index(drop=True)
+        test = pd.concat([test, test_encoded_df], axis=1)
+
+        self.config.cat_features = list(onehot_encoder.get_feature_names_out(self.config.cat_features))
+        self.config.cat_features += ["sex"]
+
+        meta_features = self.config.numerical_columns + self.config.cat_features
+
+        return meta_features
+
 
 
 class ISIC_HYBRIDDataset:
-    def __init__(self, csv, hdf5, mode, meta_features, transform=None):
-        self.csv = csv
-        if csv is not None and mode != "test":
-            self.patient_0   = csv.query(f"target == 0").reset_index(drop=True)
-            self.patient_1   = csv.query(f"target == 1").reset_index(drop=True)
-        else:
-            self.hdf5        = hdf5
-            self.patient_ids = list(self.hdf5.keys())
-
-        self.mode          = mode
-        self.use_meta      = meta_features is not None
-        self.meta_features = meta_features
-        self.transform     = transform
+    def __init__(self, config, df, meta_features, transform=None):
+        self.config           = config
+        self.df               = df
+        self.image_file_2024  = h5py.File(self.config.image_file_2024, 'r')
+        self.meta_features    = meta_features
+        self.transform        = transform
 
     def __len__(self):
-        return self.patient_0.shape[0] if self.csv is None else len(self.patient_ids)
-
-    def __getitem__(self, index):
-
-        if self.mode != "test":
-            if random.random() > 0.5:
-                row = self.patient_1.iloc[index % len(self.patient_1)]
-            else:
-                row = self.patient_0.iloc[index % len(self.patient_0)]
-            image   = cv2.imread(row.image_path)
-
-        else:
-            if self.use_meta:
-                row    = self.csv.iloc[index]
-
-            image_data = self.hdf5[self.patient_ids[index]][()]
-            image      = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        if self.transform is not None:
-            res   = self.transform(image=image)
-            image = res['image'].astype(np.float32)
-        else:
-            image = image.astype(np.float32)
+        return len(self.df)
     
     def __getitem__(self, idx):
-        image_id      = self.df.iloc[idx]['isic_id']
-        year          = self.df.iloc[idx]['year']
+        row           = self.df.iloc[idx]
+        image_id      = row['isic_id']
+        image_data    = self.image_file_2024[image_id][()]
+        pil_image     = Image.open(io.BytesIO(image_data))
+        pil_image     = np.array(pil_image)
 
-        if year == 2024:
-            image_data    = self.image_file_2024[image_id][()]
-            pil_image     = Image.open(io.BytesIO(image_data))
-            pil_image     = np.array(pil_image)
-        elif year == 2020:
-            pil_image    = self.image_file_2020[image_id][()]
-        else:
-            pil_image    = self.image_file_2019[image_id][()]   
-        
         tensor_image  = self.transform(image=pil_image)
+        meta_data     = row[self.meta_features].to_numpy().astype(np.float32)
+        data          = (torch.tensor(tensor_image['image']).float(), torch.tensor(meta_data).float())c
         tensor_target = torch.tensor(self.df.iloc[idx]['target'], dtype = torch.float)
 
-        return {'image':tensor_image['image'], 'label':tensor_target}
+        return {'data':data, 'label':tensor_target}
 
 class ISIC_HYBRIDModel(nn.Module):
     def __init__(self, model_id, out_dim, n_meta_features=0, n_meta_dim=[128,64,32], pretrained=False):
@@ -259,8 +273,6 @@ class ISIC_HYBRIDModel(nn.Module):
         x_img /= len(self.dropouts)
         X      = torch.cat((x_img, x_meta), dim=1)
         out    = self.out(X)
-        out    = self.sigmoid(out)
-        
         return out
 
     def training_step(self, batch, batch_idx):
@@ -359,8 +371,16 @@ class ISICDataModule(L.LightningDataModule):
 
     def setup(self, stage=None):
         if stage == "fit":
-            self.train_dataset = ISICDataset(self.config, self.train_df, self.train_transform)
-            self.val_dataset   = ISICDataset(self.config, self.val_df, self.test_transform)
+            pre_process = TAB_DATA_Preprocessing()
+
+            print(f"Calculating the meta features : {self.train_df.shape}")
+            self.train_df, train_meta_features = pre_process.feature_engineering(self.train_df)
+            self.val_df,   val_meta_features   = pre_process.feature_engineering(self.val_df)
+            print(f"Calculation of the meta features completed : {self.train_df.shape}")
+
+            self.train_dataset = ISICDataset(self.config, self.train_df, train_meta_features, self.train_transform)
+            self.val_dataset   = ISICDataset(self.config, self.val_df,    val_meta_features,  self.test_transform)
+
         elif stage == "predict":
             self.predict_dataset  = ISICDataset(self.config, self.val_df, self.test_transform)
         
@@ -482,11 +502,6 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
 def main(config):
 
     start_time = datetime.now()
-    print("----------------------------------------------")
-    print(os.getenv("KAGGLE_USERNAME"))
-    print(os.getenv("WANDB_API_KEY"))    
-    print("----------------------------------------------")
-
     print(f"Experiment name : {config.experiment_name} having model : {config.model_id} is started..")
     if config.debug:
         print(f"Debugging mode is on.....")
@@ -527,6 +542,10 @@ def main(config):
         else:
             train_df          = dataset_df[(dataset_df["fold"] != config.fold) & (dataset_df["fold"] != -1)]
             eval_df           = dataset_df[dataset_df["fold"] == config.fold]
+
+    
+    pre_process = TAB_DATA_Preprocessing()
+    tra
 
     print(f"Shape of the train df : {train_df.shape}")
     print(f"Shape of the test df : {eval_df.shape}")

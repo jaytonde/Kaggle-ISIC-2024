@@ -56,7 +56,7 @@ class ISICDataset:
     def __getitem__(self, idx):
         image_id      = self.df.iloc[idx]['isic_id']
 
-        if config.use_old_data:
+        if self.config.use_old_data:
             year          = self.df.iloc[idx]['year']
             if year == 2024:
                 image_data    = self.image_file_2024[image_id][()]

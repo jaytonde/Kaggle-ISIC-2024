@@ -430,7 +430,7 @@ def main(config):
 
     dataset_df            = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
-    if config.use_old_data
+    if config.use_old_data:
         print(f"Shape of the dataset df before up sampling 7 times : {dataset_df.shape}")
         df_2024_mal        = dataset_df[(dataset_df['year']==2024) & (dataset_df['target']==1)]
         df2_duplicated     = pd.concat([df_2024_mal] * 10, ignore_index=True)

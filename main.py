@@ -45,8 +45,10 @@ class ISICDataset:
         self.config              = config
         self.transform           = transform
         self.image_file_2024     = h5py.File(config.image_file_2024, 'r')
-        self.image_file_2020     = h5py.File(config.image_file_2020, 'r')
-        self.image_file_2019     = h5py.File(config.image_file_2019, 'r')
+
+        if self.config.use_old_data:
+            self.image_file_2020     = h5py.File(config.image_file_2020, 'r')
+            self.image_file_2019     = h5py.File(config.image_file_2019, 'r')
         
     def __len__(self):
         return len(self.df)

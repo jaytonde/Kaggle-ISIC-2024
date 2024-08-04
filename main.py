@@ -143,7 +143,7 @@ class ISICModel(L.LightningModule):
         #resnet
         input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
         logits          = self.model(input_images)
-        pool            = F.adaptive_avg_pool2d(logits,1).reshape(config.batch_size,-1)
+        pool            = F.adaptive_avg_pool2d(logits,1).reshape(self.config.batch_size,-1)
         if self.training:
             new_logit = 0
             for i in range(len(self.dropout)):

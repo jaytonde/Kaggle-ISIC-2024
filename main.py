@@ -121,7 +121,7 @@ class ISICModel(L.LightningModule):
             self.model.global_pool = nn.Identity()
             self.linear            = nn.Linear(self.in_features, 1)
         elif "resnet" in config.model_id:
-            self.linear    = nn.Linear(self.model.fc.in_features, 1)
+            self.linear    = nn.Linear(512, 1)
             self.dropout   = nn.ModuleList([
                                                 nn.Dropout(0.5) for i in range(5)
                                           ])

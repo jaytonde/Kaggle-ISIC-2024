@@ -90,7 +90,6 @@ class ISICDataset:
         hsv_v                = cmax
         return torch.cat([hsv_h, hsv_s, hsv_v], dim=1)
 
-
 class GeM(nn.Module):
     def __init__(self, p=3, eps=1e-6):
         super(GeM, self).__init__()
@@ -431,11 +430,12 @@ def main(config):
 
     dataset_df            = pd.read_csv(os.path.join(config.data_dir,config.training_filename))
 
-    print(f"Shape of the dataset df before up sampling 7 times : {dataset_df.shape}")
-    df_2024_mal        = dataset_df[(dataset_df['year']==2024) & (dataset_df['target']==1)]
-    df2_duplicated     = pd.concat([df_2024_mal] * 10, ignore_index=True)
-    dataset_df         = pd.concat([dataset_df, df2_duplicated], ignore_index=True)
-    print(f"Shape of the dataset df after up sampling 7 times : {dataset_df.shape}")
+    if config.use_old_data
+        print(f"Shape of the dataset df before up sampling 7 times : {dataset_df.shape}")
+        df_2024_mal        = dataset_df[(dataset_df['year']==2024) & (dataset_df['target']==1)]
+        df2_duplicated     = pd.concat([df_2024_mal] * 10, ignore_index=True)
+        dataset_df         = pd.concat([dataset_df, df2_duplicated], ignore_index=True)
+        print(f"Shape of the dataset df after up sampling 7 times : {dataset_df.shape}")
 
     if config.debug:
         config.max_epochs = 1

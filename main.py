@@ -110,7 +110,7 @@ class ISICModel(L.LightningModule):
         self.auc_roc                       = BinaryAUROC()
         self.f1_score                      = BinaryF1Score()
         
-        self.model                         = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, global_pool=self.config.global_pool)
+        self.model                         = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
         self.pooling                       = GeM()
 
         if "convnext" in config.model_id:

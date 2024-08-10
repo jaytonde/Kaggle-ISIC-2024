@@ -429,7 +429,7 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
     print(f"OOF is saved at : {file_path} having shape : {eval_df.shape}")
 
 def download_checkpoint(config):
-    login(token=os.environ["WANDB_API_KEY"])
+    login(token=os.environ["HF_TOKEN"])
     local_dir = f"{config.data_dir}/{config.first_stage}"
     snapshot_download(
         repo_id                = f"{os.environ('HF_USERNAME')}/{config.first_stage}",

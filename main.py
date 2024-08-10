@@ -432,7 +432,7 @@ def download_checkpoint(config):
     login(token=os.environ["HF_TOKEN"])
     local_dir = f"{config.data_dir}/{config.first_stage}"
     snapshot_download(
-        repo_id                = f"{os.environ('HF_USERNAME')}/{config.first_stage}",
+        repo_id                = f"{os.environ['HF_USERNAME']}/{config.first_stage}",
         local_dir              = local_dir,
         local_dir_use_symlinks = False
     )

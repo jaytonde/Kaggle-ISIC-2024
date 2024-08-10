@@ -63,6 +63,162 @@ warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
     #     loss = (-weight * log_prob).sum(dim=-1).mean()
     #     return loss
 
+
+class ISICModel_fist_stage(L.LightningModule):
+
+    def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
+        super(ISICModel, self).__init__()
+        self.config                        = config
+        self.train_step_outputs            = []
+        self.train_step_ground_truths      = []
+        self.validation_step_outputs       = []
+        self.validation_step_ground_truths = []
+        self.predict_step_outputs          = []
+
+        self.accuracy                      = BinaryAccuracy()
+        self.auc_roc                       = BinaryAUROC()
+        self.f1_score                      = BinaryF1Score()
+        
+        self.model                         = timm.create_model(config.model_id, pretrained=pretrained)
+        
+        if "convnext" in config.model_id:
+            self.linear    = nn.Linear(320, 1)
+        elif "efficientnet" in config.model_id:
+            self.in_features       = self.model.classifier.in_features
+            self.model.classifier  = nn.Identity()
+            self.model.global_pool = nn.Identity()
+            self.linear            = nn.Linear(self.in_features, 1)
+        elif "resnet" in config.model_id:
+            self.linear    = nn.Linear(512, 1)
+            self.dropout   = nn.ModuleList([
+                                                nn.Dropout(0.5) for i in range(5)
+                                          ])
+
+        if "mobilenet" in config.model_id:
+            self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
+
+        self.save_hyperparameters()
+   
+    def forward(self, x):
+        # logits          = self.model(x)
+        # pooled_features = self.pooling(logits).flatten(1)
+        # output          = self.linear(pooled_features)
+
+        #convnext 
+        logits          = self.model(x)
+        output          = self.linear(logits)
+
+        #resnet
+        # input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
+        # logits          = self.model(input_images)
+        # pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)
+        # if self.training:
+        #     new_logit = 0
+        #     for i in range(len(self.dropout)):
+        #         new_logit += self.linear(self.dropout[i](pool))
+        #     new_logit = new_logit/len(self.dropout)
+        # else:
+        #     new_logit = self.linear(pool)
+
+        return output
+    
+    def training_step(self, batch, batch_idx):
+        x      = batch['image']
+        y      = batch['label']
+        logits = self(x)
+        loss   = self.loss_fn(logits, y)
+        y_hat  = logits.sigmoid()
+
+        self.train_step_outputs.append(y_hat)
+        self.train_step_ground_truths.append(y)
+        self.log("train_loss", loss, on_step=True, logger=True)
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        x      = batch['image']
+        y      = batch['label']
+        logits = self(x)
+        loss   = self.loss_fn(logits, y)
+        y_hat  = logits.sigmoid()
+
+        self.validation_step_outputs.append(y_hat)
+        self.validation_step_ground_truths.append(y)
+        self.log("val_loss", loss, on_step=True, logger=True)
+        return loss
+    
+    def predict_step(self, batch, batch_idx):
+        x      = batch['image']
+        y      = batch['label']
+        logits = self(x)
+        y_hat  = logits.sigmoid()
+        self.predict_step_outputs.append(y_hat)
+        return y_hat
+
+    def on_train_epoch_end(self):
+        all_preds  = torch.cat(self.train_step_outputs)
+        all_labels = torch.cat(self.train_step_ground_truths)
+
+        accuracy   = self.accuracy(all_preds,all_labels.unsqueeze(1))
+        auc_roc    = self.auc_roc(all_preds,all_labels)
+        f1_score   = self.f1_score(all_preds,all_labels.unsqueeze(1))
+
+        self.log_dict({"train_accuracy":accuracy, "train_auc_roc":auc_roc, "train_f1_score":f1_score},
+                     on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+        self.train_step_outputs.clear()
+        self.train_step_ground_truths.clear()
+
+    def on_validation_epoch_end(self): 
+        all_preds      = torch.cat(self.validation_step_outputs).cpu()
+        all_labels     = torch.cat(self.validation_step_ground_truths).cpu()
+
+        fpr, tpr, thresholds = roc_curve(all_labels, all_preds)
+    
+        mask = tpr >= self.config.tpr_threshold
+        if np.sum(mask) < 2:
+            pauc = 0.123456
+            print("Not enough points above the TPR threshold for pAUC calculation.")
+        
+        else:
+            fpr_above_threshold = fpr[mask]
+            tpr_above_threshold = tpr[mask]
+            
+            partial_auc = auc(fpr_above_threshold, tpr_above_threshold)
+            
+            pauc = partial_auc * (1 - self.config.tpr_threshold)
+
+        self.log_dict({"pauc":pauc}, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+        self.validation_step_outputs.clear()
+        self.validation_step_ground_truths.clear()
+        
+    def on_predict_epoch_end(self):
+        all_preds = torch.cat(self.predict_step_outputs)
+        self.predict_step_outputs.clear()
+        return all_preds
+        
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
+        return optimizer
+    
+    def loss_fn(self, y_logits, y):
+        return nn.BCEWithLogitsLoss()(y_logits, y.unsqueeze(1))
+    
+    def F_rgb2hsv(self, rgb: torch.Tensor) -> torch.Tensor:
+        cmax, cmax_idx       = torch.max(rgb, dim=1, keepdim=True)
+        cmin                 = torch.min(rgb, dim=1, keepdim=True)[0]
+        delta                = cmax - cmin
+        hsv_h                = torch.empty_like(rgb[:, 0:1, :, :])
+        cmax_idx[delta == 0] = 3
+        hsv_h[cmax_idx == 0] = (((rgb[:, 1:2] - rgb[:, 2:3]) / delta) % 6)[cmax_idx == 0]
+        hsv_h[cmax_idx == 1] = (((rgb[:, 2:3] - rgb[:, 0:1]) / delta) + 2)[cmax_idx == 1]
+        hsv_h[cmax_idx == 2] = (((rgb[:, 0:1] - rgb[:, 1:2]) / delta) + 4)[cmax_idx == 2]
+        hsv_h[cmax_idx == 3] = 0.
+        hsv_h               /= 6.
+        hsv_s                = torch.where(cmax == 0, torch.tensor(0.).type_as(rgb), delta / cmax)
+        hsv_v                = cmax
+        return torch.cat([hsv_h, hsv_s, hsv_v], dim=1)
+
 class ISICDataset:
     def __init__(self, config, df, transform=None):
         self.df                  = df
@@ -134,7 +290,9 @@ class ISICModel(L.LightningModule):
         
         if self.config.two_stage:
             print(f"First stage model path : {config.first_stage_model}")
-            self.model                     = timm.create_model(config.first_stage_model)
+            model = ISICModel_fist_stage(config, pretrained=False)
+            model.load_state_dict(torch.load(config.first_stage_model, map_location=torch.device('gpu'))['state_dict'])
+            self.model = model
             print("First stage loaded successfully..")
         else:
             self.model                     = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)

@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-13"
+experiment_name      : "ISIC-EXP-16"
 
 #Model parameter's
 model_id             : 'convnextv2_atto.fcmae'

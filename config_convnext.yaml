@@ -15,6 +15,8 @@ fold                 : 0
 seed                 : 2024
 tpr_threshold        : 0.8
 image_size           : 312
+two_stage            : True
+first_stage          : "ISIC-EXP-15"
 
 #Logging
 wandb_log            : True

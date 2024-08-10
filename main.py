@@ -23,21 +23,45 @@ from huggingface_hub import HfApi
 from huggingface_hub import login
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader
-from albumentations.pytorch import ToTensorV2
-from sklearn.metrics import roc_auc_score, auc, roc_curve
 from sklearn.model_selection import KFold
 import torchvision.transforms as transforms
+from albumentations.pytorch import ToTensorV2
+from lightning.pytorch.loggers import WandbLogger
 from torchmetrics.classification import BinaryAUROC
 from sklearn.model_selection import StratifiedKFold
 from lightning.pytorch.callbacks import ModelCheckpoint
-from lightning.pytorch.loggers import WandbLogger
+from sklearn.metrics import roc_auc_score, auc, roc_curve
+from huggingface_hub import login, hf_hub_download, snapshot_download
 from transformers import AutoTokenizer, AutoConfig, DataCollatorWithPadding, set_seed
 from torchmetrics.classification import BinaryAUROC,BinaryAccuracy,BinaryF1Score
+
 load_dotenv()
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
 
+# def focal_loss(y_true, y_pred):
+#     import keras.backend as K
+#     epsilon         = K.epsilon()                                  # Define epsilon so that the backpropagation will not result in NaN
+#     y_pred_ls       = (1 - ls) * y_pred + ls / classes             # label smoothing Add the epsilon to prediction value #y_pred = y_pred + epsilon
+#     y_pred_ls       = K.clip(y_pred_ls, epsilon, 1.0-epsilon)      # Clip the prediction value
+#     cross_entropy   = -y_true*K.log(y_pred_ls)                     # Calculate cross entropy
+#     weight          = alpha * y_true * K.pow((1-y_pred_ls), gamma) # Calculate weight that consists of  modulating factor and weighting factor
+#     loss            = weight * cross_entropy                       # Calculate focal loss
+#     loss            = K.sum(loss, axis=1)                          # Sum the losses in mini_batch
+#     return loss
 
+#class LabelSmoothLoss(nn.Module):
+    
+    # def __init__(self, smoothing=0.0):
+    #     super(LabelSmoothLoss, self).__init__()
+    #     self.smoothing = smoothing
+    
+    # def forward(self, input, target):
+    #     log_prob = torch.nn.LogSoftmax(-1)(input)
+    #     weight   = input.new_ones(input.size()) * self.smoothing / (input.size(-1) - 1.)
+    #     weight.scatter_(-1, target.unsqueeze(-1), (1. - self.smoothing))
+    #     loss = (-weight * log_prob).sum(dim=-1).mean()
+    #     return loss
 
 class ISICDataset:
     def __init__(self, config, df, transform=None):
@@ -76,8 +100,6 @@ class ISICDataset:
 
         return {'image':tensor_image['image'], 'label':tensor_target}
 
-    
-
 class GeM(nn.Module):
     def __init__(self, p=3, eps=1e-6):
         super(GeM, self).__init__()
@@ -110,7 +132,11 @@ class ISICModel(L.LightningModule):
         self.auc_roc                       = BinaryAUROC()
         self.f1_score                      = BinaryF1Score()
         
-        self.model                         = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
+        if self.config.two_stage:
+            self.model                     = timm.create_model(config.data_dir +'/'+config.first_stage + '/full_fit')
+            print("First stage loaded successfully..")
+        else:
+            self.model                     = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
         self.pooling                       = GeM()
 
         if "convnext" in config.model_id:
@@ -402,15 +428,26 @@ def save_results(config, eval_df, results, out_dir, wandb_logger):
     eval_df.to_csv(file_path, index=False)
     print(f"OOF is saved at : {file_path} having shape : {eval_df.shape}")
 
+def download_checkpoint(config):
+    login(token=os.environ["WANDB_API_KEY"])
+    local_dir = f"{config.data_dir}/{config.first_stage}"
+    snapshot_download(
+        repo_id                = f"{os.environ('HF_USERNAME')}/{config.first_stage}",
+        local_dir              = local_dir,
+        local_dir_use_symlinks = False
+    )
+    print(f"First stage is downloaded successfully in local dir : {local_dir}")
+
 def main(config):
 
     start_time = datetime.now()
-    print("----------------------------------------------")
-    print(os.getenv("KAGGLE_USERNAME"))
-    print(os.getenv("WANDB_API_KEY"))    
-    print("----------------------------------------------")
 
     print(f"Experiment name : {config.experiment_name} having model : {config.model_id} is started..")
+
+    if config.two_stage:
+        print("This is the 2nd stage of model training.")
+        download_checkpoint(config)
+
     if config.debug:
         print(f"Debugging mode is on.....")
     if config.full_fit:

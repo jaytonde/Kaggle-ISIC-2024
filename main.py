@@ -133,7 +133,9 @@ class ISICModel(L.LightningModule):
         self.f1_score                      = BinaryF1Score()
         
         if self.config.two_stage:
-            self.model                     = timm.create_model(config.data_dir +'/'+config.first_stage + '/full_fit')
+            model_path                     = config.data_dir +'/'+config.first_stage + '/full_fit/'
+            print(f"First stage model path : {model_path}")
+            self.model                     = timm.create_model(model_path)
             print("First stage loaded successfully..")
         else:
             self.model                     = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)

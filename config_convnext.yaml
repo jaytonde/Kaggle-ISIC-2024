@@ -37,5 +37,6 @@ config_file          : "config_convnext.yaml"
 image_file_2024      : '${data_dir}/train-image.hdf5'
 image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'
 image_file_2019      : '${data_dir}/images_maliganant_2019.hdf5'
+first_stage_model    : '${data_dir}/${first_stage}/full_fit/best-checkpoint.ckpt'
 
 

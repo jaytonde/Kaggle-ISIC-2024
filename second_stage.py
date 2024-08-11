@@ -268,7 +268,7 @@ class ISICModel(L.LightningModule):
         
         if self.config.two_stage:
             print(f"First stage model path : {config.first_stage_model}")
-            model = ISICModel_fist_stage(config=self.config, pretrained=False)
+            model      = ISICModel_fist_stage(config=self.config, pretrained=False)
             state_dict = torch.load(config.first_stage_model, map_location=torch.device('cuda'))['state_dict']
             model.load_state_dict(state_dict)
             self.model = model
@@ -278,7 +278,7 @@ class ISICModel(L.LightningModule):
         self.pooling                       = GeM()
 
         if "convnext" in config.model_id:
-            self.linear    = nn.Linear(320, 1)
+            self.linear    = nn.Linear(64, 1)
         elif "efficientnet" in config.model_id:
             self.in_features       = self.model.classifier.in_features
             self.model.classifier  = nn.Identity()
@@ -297,9 +297,9 @@ class ISICModel(L.LightningModule):
    
     def forward(self, x):
         logits          = self.model(x)
-        output          = self.linear(logits)
+        output          = self.linear( )
         return output
-        
+
     def training_step(self, batch, batch_idx):
         x      = batch['image']
         y      = batch['label']

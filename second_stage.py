@@ -39,35 +39,10 @@ load_dotenv()
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
 
-# def focal_loss(y_true, y_pred):
-#     import keras.backend as K
-#     epsilon         = K.epsilon()                                  # Define epsilon so that the backpropagation will not result in NaN
-#     y_pred_ls       = (1 - ls) * y_pred + ls / classes             # label smoothing Add the epsilon to prediction value #y_pred = y_pred + epsilon
-#     y_pred_ls       = K.clip(y_pred_ls, epsilon, 1.0-epsilon)      # Clip the prediction value
-#     cross_entropy   = -y_true*K.log(y_pred_ls)                     # Calculate cross entropy
-#     weight          = alpha * y_true * K.pow((1-y_pred_ls), gamma) # Calculate weight that consists of  modulating factor and weighting factor
-#     loss            = weight * cross_entropy                       # Calculate focal loss
-#     loss            = K.sum(loss, axis=1)                          # Sum the losses in mini_batch
-#     return loss
-
-#class LabelSmoothLoss(nn.Module):
-    
-    # def __init__(self, smoothing=0.0):
-    #     super(LabelSmoothLoss, self).__init__()
-    #     self.smoothing = smoothing
-    
-    # def forward(self, input, target):
-    #     log_prob = torch.nn.LogSoftmax(-1)(input)
-    #     weight   = input.new_ones(input.size()) * self.smoothing / (input.size(-1) - 1.)
-    #     weight.scatter_(-1, target.unsqueeze(-1), (1. - self.smoothing))
-    #     loss = (-weight * log_prob).sum(dim=-1).mean()
-    #     return loss
-
-
 class ISICModel_fist_stage(L.LightningModule):
 
     def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
-        super(ISICModel, self).__init__()
+        super(ISICModel_fist_stage, self).__init__()
         self.config                        = config
         self.train_step_outputs            = []
         self.train_step_ground_truths      = []

@@ -38,6 +38,9 @@ from torchmetrics.classification import BinaryAUROC,BinaryAccuracy,BinaryF1Score
 load_dotenv()
 warnings.filterwarnings("ignore", category=UserWarning, module="transformers")
 
+class CONFIG:
+    key : 'value'
+
 
 class ISICModel_fist_stage(L.LightningModule):
 

@@ -296,28 +296,10 @@ class ISICModel(L.LightningModule):
         self.save_hyperparameters()
    
     def forward(self, x):
-        # logits          = self.model(x)
-        # pooled_features = self.pooling(logits).flatten(1)
-        # output          = self.linear(pooled_features)
-
-        #convnext 
-        # logits          = self.model(x)
-        # output          = self.linear(logits)
-
-        #resnet
-        input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
-        logits          = self.model(input_images)
-        pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)
-        if self.training:
-            new_logit = 0
-            for i in range(len(self.dropout)):
-                new_logit += self.linear(self.dropout[i](pool))
-            new_logit = new_logit/len(self.dropout)
-        else:
-            new_logit = self.linear(pool)
-
-        return new_logit
-    
+        logits          = self.model(x)
+        output          = self.linear(logits)
+        return output
+        
     def training_step(self, batch, batch_idx):
         x      = batch['image']
         y      = batch['label']

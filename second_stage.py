@@ -265,7 +265,7 @@ class ISICModel(L.LightningModule):
         
         if self.config.two_stage:
             print(f"First stage model path : {config.first_stage_model}")
-            model = ISICModel_fist_stage(config, pretrained=False)
+            model = ISICModel_fist_stage(config=self.config, pretrained=False)
             model.load_state_dict(torch.load(config.first_stage_model, map_location=torch.device('cuda'))['state_dict'])
             self.model = model
             print("First stage loaded successfully..")

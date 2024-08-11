@@ -296,8 +296,7 @@ class ISICModel(L.LightningModule):
         self.save_hyperparameters()
    
     def forward(self, x):
-        logits          = self.model(x)
-        output          = self.linear(logits)
+        output          = self.model(x)
         return output
 
     def training_step(self, batch, batch_idx):

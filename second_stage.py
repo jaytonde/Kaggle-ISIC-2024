@@ -297,7 +297,7 @@ class ISICModel(L.LightningModule):
    
     def forward(self, x):
         logits          = self.model(x)
-        output          = self.linear( )
+        output          = self.linear(logits)
         return output
 
     def training_step(self, batch, batch_idx):

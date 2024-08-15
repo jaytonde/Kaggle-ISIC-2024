@@ -269,15 +269,16 @@ class ISICModel(L.LightningModule):
         if self.config.two_stage:
             print(f"First stage model path : {config.first_stage_model}")
             model      = ISICModel_fist_stage(config=self.config, pretrained=False)
-            state_dict = torch.load(config.first_stage_model, map_location=torch.device('cuda'))['state_dict']
-            model.load_state_dict(state_dict)
+
+            if self.trainig:
+                state_dict = torch.load(config.first_stage_model, map_location=torch.device('cuda'))['state_dict']
+                model.load_state_dict(state_dict)
             self.model = model
 
             print("Freezing the first stage of conv from first stage model")
-            for idx, param in enumerate(self.model.stages):
-                if idx == 0:
-                    param.requires_grad = False
-                print(f"Freezing the stage : {idx} out of 4 and required grads : {param.requires_grad}")
+            for i,(name, param) in enumerate(list(self.model.named_parameters())[0:config.num_frozen_layers]):
+                param.requires_grad = False
+                
             print("First stage loaded successfully..")
         else:
             self.model                     = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)

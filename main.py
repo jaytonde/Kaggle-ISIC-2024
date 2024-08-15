@@ -160,20 +160,20 @@ class ISICModel(L.LightningModule):
         # output          = self.linear(pooled_features)
 
         #convnext 
-        # logits          = self.model(x)
-        # output          = self.linear(logits)
+        logits          = self.model(x)
+        output          = self.linear(logits)
 
         #resnet
-        input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
-        logits          = self.model(input_images)
-        pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)
-        if self.training:
-            new_logit = 0
-            for i in range(len(self.dropout)):
-                new_logit += self.linear(self.dropout[i](pool))
-            new_logit = new_logit/len(self.dropout)
-        else:
-            new_logit = self.linear(pool)
+        # input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
+        # logits          = self.model(input_images)
+        # pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)
+        # if self.training:
+        #     new_logit = 0
+        #     for i in range(len(self.dropout)):
+        #         new_logit += self.linear(self.dropout[i](pool))
+        #     new_logit = new_logit/len(self.dropout)
+        # else:
+        #     new_logit = self.linear(pool)
 
         return new_logit
     

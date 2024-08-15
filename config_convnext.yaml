@@ -22,6 +22,10 @@ first_stage          : "ISIC-EXP-15"
 num_frozen_layers    : 20
 
 
+#Label smoothing
+alpha                : 0.1
+
+
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"

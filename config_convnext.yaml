@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-17"
+experiment_name      : "ISIC-EXP-18"
 
 #Model parameter's
 model_id             : 'convnextv2_atto.fcmae'
@@ -19,7 +19,7 @@ dropout              : 0.5
 use_old_data         : True
 two_stage            : True
 first_stage          : "ISIC-EXP-15"
-num_frozen_layers    : 34
+num_frozen_layers    : 20
 
 
 #Logging

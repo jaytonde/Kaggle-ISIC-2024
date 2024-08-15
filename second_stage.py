@@ -273,13 +273,13 @@ class ISICModel(L.LightningModule):
             if self.training:
                 state_dict = torch.load(config.first_stage_model, map_location=torch.device('cuda'))['state_dict']
                 model.load_state_dict(state_dict)
-            self.model = model
+                print("First stage loaded successfully..")
 
-            print("Freezing the first stage of conv from first stage model")
+            self.model = model
+            print(f"Freezing the {config.num_frozen_layers} layers from first stage model")
             for i,(name, param) in enumerate(list(self.model.named_parameters())[0:config.num_frozen_layers]):
                 param.requires_grad = False
-
-            print("First stage loaded successfully..")
+            
         else:
             self.model                     = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
         self.pooling                       = GeM()

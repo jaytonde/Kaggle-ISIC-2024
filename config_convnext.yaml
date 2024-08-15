@@ -19,7 +19,7 @@ dropout              : 0.5
 use_old_data         : True
 two_stage            : True
 first_stage          : "ISIC-EXP-15"
-num_frozen_layers    : 5
+num_frozen_layers    : 34
 
 
 #Logging

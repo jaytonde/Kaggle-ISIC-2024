@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-19"
+experiment_name      : "ISIC-EXP-20"
 
 #Model parameter's
 model_id             : 'convnextv2_atto.fcmae'
@@ -17,7 +17,7 @@ tpr_threshold        : 0.8
 image_size           : 312
 dropout              : 0.5
 use_old_data         : True
-two_stage            : True
+two_stage            : False
 first_stage          : "ISIC-EXP-15"
 num_frozen_layers    : 45
 
@@ -29,7 +29,7 @@ alpha                : 0.1
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "freezing 45 layers,second stage,balanced dataset, 10 epochs, upsampled 2024 maliganant 10 times, added 2020, 2019 maliganant images"
+notes                : "Added label smoothing, balanced dataset, 10 epochs, upsampled 2024 maliganant 10 times, added 2020, 2019 maliganant images"
 
 #Files and paths
 data_dir             : "./input"

@@ -25,7 +25,7 @@ num_frozen_layers    : 20
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "freezing 34 layers,second stage,balanced dataset, 10 epochs, upsampled 2024 maliganant 10 times, added 2020, 2019 maliganant images"
+notes                : "freezing 10 layers,second stage,balanced dataset, 10 epochs, upsampled 2024 maliganant 10 times, added 2020, 2019 maliganant images"
 
 #Files and paths
 data_dir             : "./input"

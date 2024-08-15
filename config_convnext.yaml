@@ -33,7 +33,7 @@ artifacts_dir        : "./output"
 output_dir           : "${artifacts_dir}/${experiment_name}"
 training_filename    : "ISIC_train_data_2024_2020_2019_balanced.csv"
 image_path           : '${data_dir}/train-image.hdf5'
-train_code_file      : "main.py"
+train_code_file      : "second_stage.py"
 config_file          : "config_convnext.yaml"
 image_file_2024      : '${data_dir}/train-image.hdf5'
 image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'

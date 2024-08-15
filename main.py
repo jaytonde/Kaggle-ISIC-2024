@@ -131,25 +131,24 @@ class ISICModel(L.LightningModule):
         self.accuracy                      = BinaryAccuracy()
         self.auc_roc                       = BinaryAUROC()
         self.f1_score                      = BinaryF1Score()
-        
-        self.model                         = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
         self.pooling                       = GeM()
 
         if "convnext" in config.model_id:
+            self.model     = timm.create_model(config.model_id, pretrained=pretrained)
             self.linear    = nn.Linear(320, 1)
 
-        elif "efficientnet" in config.model_id:
+        elif "efficientnet" in self.config.model_id:
             self.in_features       = self.model.classifier.in_features
             self.model.classifier  = nn.Identity()
             self.model.global_pool = nn.Identity()
             self.linear            = nn.Linear(self.in_features, 1)
 
-        elif "resnet" in config.model_id:
+        elif "resnet" in self.config.model_id:
             self.linear    = nn.Linear(512, 1)
             self.dropout   = nn.ModuleList([
                                                 nn.Dropout(0.5) for i in range(5)
                                           ])
-        elif "mobilenet" in config.model_id:
+        elif "mobilenet" in self.config.model_id:
             self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
 
         self.save_hyperparameters()

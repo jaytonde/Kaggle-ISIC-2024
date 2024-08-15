@@ -132,50 +132,52 @@ class ISICModel(L.LightningModule):
         self.auc_roc                       = BinaryAUROC()
         self.f1_score                      = BinaryF1Score()
         
-
-        self.model                     = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
+        self.model                         = timm.create_model(config.model_id, pretrained=pretrained,  in_chans=self.config.in_chans, num_classes=0, global_pool=self.config.global_pool)
         self.pooling                       = GeM()
 
         if "convnext" in config.model_id:
             self.linear    = nn.Linear(320, 1)
+
         elif "efficientnet" in config.model_id:
             self.in_features       = self.model.classifier.in_features
             self.model.classifier  = nn.Identity()
             self.model.global_pool = nn.Identity()
             self.linear            = nn.Linear(self.in_features, 1)
+
         elif "resnet" in config.model_id:
             self.linear    = nn.Linear(512, 1)
             self.dropout   = nn.ModuleList([
                                                 nn.Dropout(0.5) for i in range(5)
                                           ])
-
-        if "mobilenet" in config.model_id:
+        elif "mobilenet" in config.model_id:
             self.model.classifier = nn.Linear(self.model.classifier.in_features, 1)
 
         self.save_hyperparameters()
    
     def forward(self, x):
-        # logits          = self.model(x)
-        # pooled_features = self.pooling(logits).flatten(1)
-        # output          = self.linear(pooled_features)
 
-        #convnext 
-        logits          = self.model(x)
-        output          = self.linear(logits)
+        if "efficientnet" in config.model_id:
+            logits          = self.model(x)
+            pooled_features = self.pooling(logits).flatten(1)
+            output          = self.linear(pooled_features)
 
-        #resnet
-        # input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
-        # logits          = self.model(input_images)
-        # pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)
-        # if self.training:
-        #     new_logit = 0
-        #     for i in range(len(self.dropout)):
-        #         new_logit += self.linear(self.dropout[i](pool))
-        #     new_logit = new_logit/len(self.dropout)
-        # else:
-        #     new_logit = self.linear(pool)
+        elif "convnext" in config.model_id:
+            logits          = self.model(x)
+            output          = self.linear(logits)
 
-        return new_logit
+        elif "resnet" in config.model_id:
+            input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
+            logits          = self.model(input_images)
+            pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)
+            if self.training:
+                output = 0
+                for i in range(len(self.dropout)):
+                    output += self.linear(self.dropout[i](pool))
+                output = output/len(self.dropout)
+            else:
+                output = self.linear(pool)
+
+        return output
     
     def training_step(self, batch, batch_idx):
         x      = batch['image']

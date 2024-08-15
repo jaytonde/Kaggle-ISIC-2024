@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-18"
+experiment_name      : "ISIC-EXP-19"
 
 #Model parameter's
 model_id             : 'convnextv2_atto.fcmae'
@@ -17,7 +17,7 @@ tpr_threshold        : 0.8
 image_size           : 312
 dropout              : 0.5
 use_old_data         : True
-two_stage            : True
+two_stage            : False
 first_stage          : "ISIC-EXP-15"
 num_frozen_layers    : 20
 
@@ -37,7 +37,7 @@ artifacts_dir        : "./output"
 output_dir           : "${artifacts_dir}/${experiment_name}"
 training_filename    : "ISIC_train_data_2024_2020_2019_balanced.csv"
 image_path           : '${data_dir}/train-image.hdf5'
-train_code_file      : "second_stage.py"
+train_code_file      : "main.py"
 config_file          : "config_convnext.yaml"
 image_file_2024      : '${data_dir}/train-image.hdf5'
 image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'

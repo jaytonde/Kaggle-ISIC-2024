@@ -258,9 +258,7 @@ class ISICModel(L.LightningModule):
         return optimizer
     
     def loss_fn(self, y_logits, y):
-        print(f"hard labels : {y}")
         y_ls = (1 - self.config.alpha) * y + self.config.alpha / self.config.num_classes
-        print(f"soft labels : {y_ls}")
         return nn.BCEWithLogitsLoss()(y_logits, y_ls.unsqueeze(1))
     
     def F_rgb2hsv(self, rgb: torch.Tensor) -> torch.Tensor:

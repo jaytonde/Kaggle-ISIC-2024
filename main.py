@@ -155,16 +155,16 @@ class ISICModel(L.LightningModule):
    
     def forward(self, x):
 
-        if "efficientnet" in config.model_id:
+        if "efficientnet" in self.config.model_id:
             logits          = self.model(x)
             pooled_features = self.pooling(logits).flatten(1)
             output          = self.linear(pooled_features)
 
-        elif "convnext" in config.model_id:
+        elif "convnext" in self.config.model_id:
             logits          = self.model(x)
             output          = self.linear(logits)
 
-        elif "resnet" in config.model_id:
+        elif "resnet" in self.config.model_id:
             input_images    = torch.cat([x, self.F_rgb2hsv(x)],1)
             logits          = self.model(input_images)
             pool            = F.adaptive_avg_pool2d(logits,1).reshape(len(x),-1)

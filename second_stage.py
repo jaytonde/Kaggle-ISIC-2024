@@ -253,9 +253,10 @@ class GeM(nn.Module):
 
 class ISICModel(L.LightningModule):
 
-    def __init__(self, config, num_classes: int = 2, pretrained: bool = True):
+    def __init__(self, config, num_classes: int = 2, pretrained: bool = True, stage='train'):
         super(ISICModel, self).__init__()
         self.config                        = config
+        self.stage                         = stage
         self.train_step_outputs            = []
         self.train_step_ground_truths      = []
         self.validation_step_outputs       = []
@@ -270,7 +271,7 @@ class ISICModel(L.LightningModule):
             print(f"First stage model path : {config.first_stage_model}")
             model      = ISICModel_fist_stage(config=self.config, pretrained=False)
 
-            if self.training:
+            if self.stage == 'train':
                 state_dict = torch.load(config.first_stage_model, map_location=torch.device('cuda'))['state_dict']
                 model.load_state_dict(state_dict)
                 print("First stage loaded successfully..")
@@ -605,6 +606,12 @@ def main(config):
     if config.use_old_data:
         print(f"Shape of the dataset df before up sampling 7 times : {dataset_df.shape}")
         df_2024_mal        = dataset_df[(dataset_df['year']==2024) & (dataset_df['target']==1)]
+        df2_duplicated     = pd.concat([df_2024_mal] * 7, ignore_index=True)
+        dataset_df         = pd.concat([dataset_df, df2_duplicated], ignore_index=True)
+        print(f"Shape of the dataset df after up sampling 7 times : {dataset_df.shape}")
+    elif config.upsample_2024:
+        print(f"Shape of the dataset df before up sampling 7 times : {dataset_df.shape}")
+        df_2024_mal        = dataset_df[dataset_df['target']==1]
         df2_duplicated     = pd.concat([df_2024_mal] * 7, ignore_index=True)
         dataset_df         = pd.concat([dataset_df, df2_duplicated], ignore_index=True)
         print(f"Shape of the dataset df after up sampling 7 times : {dataset_df.shape}")

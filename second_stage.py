@@ -613,7 +613,6 @@ def main(config):
         print(f"Shape of the dataset df before up sampling 7 times : {dataset_df.shape}")
         df_2024_mal        = dataset_df[dataset_df['target']==1]
         df2_duplicated     = pd.concat([df_2024_mal] * 7, ignore_index=True)
-        dataset_df         = dataset_df[dataset_df['target']==0][0:11000]
         dataset_df         = pd.concat([dataset_df, df2_duplicated], ignore_index=True)
         print(f"Shape of the dataset df after up sampling 7 times : {dataset_df.shape}")
 

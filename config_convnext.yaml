@@ -1,5 +1,5 @@
 #Naming
-experiment_name      : "ISIC-EXP-22"
+experiment_name      : "ISIC-EXP-24"
 
 #Model parameter's
 model_id             : 'convnextv2_atto.fcmae'
@@ -16,29 +16,29 @@ seed                 : 2024
 tpr_threshold        : 0.8
 image_size           : 312
 dropout              : 0.5
-use_old_data         : False
-two_stage            : True
+use_old_data         : True
+two_stage            : False
 first_stage          : "ISIC-EXP-15"
 num_frozen_layers    : 34
 upsample_2024        : True
 
 
 #Label smoothing
-alpha                : 0.1
+alpha                : 0.5
 
 
 #Logging
 wandb_log            : True
 wandb_project_name   : "ISIC"
-notes                : "2nd stage only 2024 data, balanced dataset, 10 epochs"
+notes                : "balanced dataset 2019, 2020, 2024, 10 epochs, 0.5 label smoothing alpha"
 
 #Files and paths
 data_dir             : "./input"
 artifacts_dir        : "./output"
 output_dir           : "${artifacts_dir}/${experiment_name}"
-training_filename    : "ISIC_train_data.csv"
+training_filename    : "ISIC_train_data_2024_2020_2019_balanced.csv"
 image_path           : '${data_dir}/train-image.hdf5'
-train_code_file      : "second_stage.py"
+train_code_file      : "main.py"
 config_file          : "config_convnext.yaml"
 image_file_2024      : '${data_dir}/train-image.hdf5'
 image_file_2020      : '${data_dir}/images_maliganant_2020.hdf5'

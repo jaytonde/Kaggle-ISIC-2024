@@ -24,7 +24,7 @@ upsample_2024        : True
 
 
 #Label smoothing
-alpha                : 0.5
+alpha                : 0.8
 
 
 #Logging

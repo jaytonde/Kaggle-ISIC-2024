@@ -15,8 +15,8 @@ PROJECT="Kaggle-ISIC-2024"
 
 
 # get source code from GitHub
-git config --global user.name "jaytonde"
-git config --global user.email "jaytonde05@gmail.com"
+git config --global user.name ""
+git config --global user.email ""
 git clone https://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@github.com/jaytonde/Kaggle-ISIC-2024.git
 
 if [ "$1" == "colab" ]
